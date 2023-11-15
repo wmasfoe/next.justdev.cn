@@ -142,3 +142,7 @@
 .token.table {
   display: inline;
 }
+
+html.dark .prose {
+  --tw-prose-pre-bg: #262626;
+}
