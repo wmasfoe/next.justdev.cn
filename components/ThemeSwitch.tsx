@@ -24,10 +24,9 @@ const ThemeSwitch = () => {
 
     handleChange();
 
-    mediaQueryListDark.onchange = handleChange;
-
+    mediaQueryListDark.addEventListener('change', handleChange);
     return () => {
-      mediaQueryListDark.onchange = () => {};
+      mediaQueryListDark.removeEventListener('change', handleChange);
     }
   }, []);
 
