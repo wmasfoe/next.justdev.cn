@@ -1,13 +1,13 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'Jiaqi.Li Jiaqi.Li Blog',
+  title: 'Jiaqi.Li Blog',
   author: 'Jiaqi.Li',
   headerTitle: 'Jiaqi.Li Blog',
   description: 'hi, 欢迎来的我的博客',
   language: 'zh-cn',
   theme: 'system', // system, dark or light
   siteUrl: 'https://blog.justdev.cn',
-  siteRepo: 'https://github.com/wmasfoe/site',
+  siteRepo: 'https://github.com/wmasfoe/next.justdev.cn',
   siteLogo: '/static/images/logo.png',
   socialBanner: '/static/images/twitter-card.png',
   email: 'lijq1103@gmail.com',
@@ -35,15 +35,15 @@ const siteMetadata = {
     //   googleAnalyticsId: '', // e.g. G-XXXXXXX
     // },
   },
-  comment: {
+  comments: {
     // Select a provider and use the environment variables associated to it
     // https://vercel.com/docs/environment-variables
     provider: 'giscus', // supported providers: giscus, utterances, disqus
     giscusConfig: {
-      repo: process.env.NEXT_PUBLIC_GISCUS_REPO,
-      repositoryId: process.env.NEXT_PUBLIC_GISCUS_REPOSITORY_ID,
-      category: process.env.NEXT_PUBLIC_GISCUS_CATEGORY,
-      categoryId: process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID,
+      repo: 'wmasfoe/blog-comment',
+      repositoryId: 'R_kgDOJfcBiQ',
+      category: 'General',
+      categoryId: 'DIC_kwDOJfcBic4CWS_T',
       mapping: 'pathname',
       reactions: '1',
       metadata: '0',
