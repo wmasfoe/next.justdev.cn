@@ -41,6 +41,7 @@ const ThemeSwitch = () => {
   }
 
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events
     <div
       className="color-scheme-switch-wrapper"
       aria-label="Toggle Dark Mode"
