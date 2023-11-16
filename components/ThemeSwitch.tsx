@@ -1,6 +1,6 @@
 'use client'
-
-import { useEffect, useState, useLayoutEffect } from 'react'
+/* eslint-disable jsx-a11y/label-has-associated-control, jsx-a11y/no-static-element-interactions, jsx-a11y/label-has-for */
+import { useEffect, useState, useLayoutEffect, MouseEvent, TouchEvent, KeyboardEvent } from 'react'
 import { useTheme } from 'next-themes'
 import '../css/ThemeSwitch.css'
 
@@ -11,26 +11,26 @@ const ThemeSwitch = () => {
   // When mounted on client, now we can show the UI
   useEffect(() => setMounted(true), [])
 
-  const [theme, setTheme] = useState('wait');
+  const [theme, setTheme] = useState('wait')
 
   useLayoutEffect(() => {
-    const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)')
 
-    function handleChange () {
-      const theme = mediaQueryListDark.matches ? 'dark' : 'light';
-      setTheme(theme);
+    function handleChange() {
+      const theme = mediaQueryListDark.matches ? 'dark' : 'light'
+      setTheme(theme)
       setNextTheme(theme)
     }
 
-    handleChange();
+    handleChange()
 
-    mediaQueryListDark.addEventListener('change', handleChange);
+    mediaQueryListDark.addEventListener('change', handleChange)
     return () => {
-      mediaQueryListDark.removeEventListener('change', handleChange);
+      mediaQueryListDark.removeEventListener('change', handleChange)
     }
-  }, []);
+  }, [])
 
-  const changeTheme = (event: any) => {
+  const changeTheme = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
     setNextTheme(theme === 'dark' ? 'light' : 'dark')
     event.preventDefault()
@@ -41,15 +41,22 @@ const ThemeSwitch = () => {
   }
 
   return (
-    <div className="color-scheme-switch-wrapper" aria-label="Toggle Dark Mode" onClick={changeTheme}>
-      <input
-        type="checkbox"
-        name="color-scheme-switch"
-        checked={theme === 'dark' || nextTheme === 'dark'}
-        className="color-scheme-switch"
-        onChange={() => {}}
-      />
-      <label htmlFor="color-scheme-switch"/>
+    <div
+      className="color-scheme-switch-wrapper"
+      aria-label="Toggle Dark Mode"
+      onClick={changeTheme}
+      onKeyDown={changeTheme}
+    >
+      <label htmlFor="color-scheme-switch">
+        <input
+          type="checkbox"
+          name="color-scheme-switch"
+          id="color-scheme-switch"
+          checked={theme === 'dark' || nextTheme === 'dark'}
+          className="color-scheme-switch"
+          onChange={() => {}}
+        />
+      </label>
     </div>
   )
 }
