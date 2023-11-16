@@ -28,7 +28,7 @@ const ThemeSwitch = () => {
     return () => {
       mediaQueryListDark.removeEventListener('change', handleChange)
     }
-  }, [])
+  }, [setNextTheme])
 
   const changeTheme = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
