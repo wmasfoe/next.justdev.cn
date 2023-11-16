@@ -3,7 +3,7 @@ const siteMetadata = {
   title: 'Jiaqi.Li Blog',
   author: 'Jiaqi.Li',
   headerTitle: 'Jiaqi.Li Blog',
-  description: 'hi, 欢迎来的我的博客',
+  description: 'hi, 欢迎来到我的博客.',
   language: 'zh-cn',
   theme: 'system', // system, dark or light
   siteUrl: 'https://blog.justdev.cn',
