@@ -1,0 +1,118 @@
+---
+title: 我的博客发展史
+date: '2023-04-19'
+tags: []
+draft: false
+summary: 历经好几年，我博客的正式版终于上线了，来回顾一下我这些年里一步步搭过的博客系统。
+---
+
+## 缘起
+
+学生时代（大学），就开始在 CSDN 上写一些自己的文章（不得不说 CSDN 当时在我心里还是大佬云集的社区）。
+我当时第一篇博客还是使用 Python3 `request + xpath + RegExp` 爬取网课答案，不少的阅读量，甚至使用 `pyinstaller` 打包成 exe 分享给同学。
+
+当时感觉到了编程的乐趣，享受其中，后续成长为一名前端开发工程师。
+
+后来就想有自己的博客网站，但是技术太菜，一直用的 CSDN。
+
+## 第一代博客
+
+> 第一代博客，是使用 `ejs + express` 搭建的一套多用户的博客系统（我也不知道为什么要搞个多用户，当时可能压根不知道个人博客和 CSDN 这种博客平台有什么区别，只能照着 CSDN 的样子来做）。
+
+> 当时还在用 Gitee 第一代博客仓库：[keepess/blog](https://gitee.com/keepess/blog)
+
+哦，我记得当时用静态 html 搭了好多博客首页，但是不知道怎么让其他人也看到，没办法只能自己欣赏。
+
+然后我学了 `nodejs`， JavaScript 也可以用来写接口，JavaScript 的语法确实相较其他语言简单一些。
+还有 `Ajax`，不懂为什么要异步？一直使用 `jQuery` 的 `$.ajax(xxx, { sync: true })`。
+
+有了这两个技术，我就可以使我的网站丰富起来了，一些与数据库交互的地方。提到数据库，我当时甚至不知道 `ORM` 这种库，一直自己在拼 SQL。
+
+一开始搞了个 `Cookie Session` 形式的鉴权，但是感觉 `session` 存在 `nodejs` 内存里不太好。于是改成 JWT 的形式，nodejs 这里只需要一个密钥就好了。
+
+鉴权搞好了之后，接下来就是博客的展示了，我发现存到数据库的数据展示到前端没有任何样式，只能通过模板引擎不同的渲染字段渲染到对应的位置上，
+然后为这些。位置设置不同的标签。这样做起来也太合理，博客只能大致分为 3 部分：标题+摘要+正文。
+
+不合适，第一代博客就做成这样了。
+
+## 第二代博客
+
+第二代与第一代差距不大，仍然是一个多用户的博客系统，只不过升级了一下框架 `koa2 + sequelize` （终于不用拼 SQL 了） 然后部署了一下。
+项目架构也是前后端分离的，前端使用 Vue 来搭建。
+印象最深的是跨域的问题，通过 `koa-cors` 解了。
+
+## 第三代博客
+
+第三代博客就有一些技术含量了，采用 github issue 来搭建，不需要自己来写接口。由于白嫖的 Github 博客文章样式问题也迎刃而解。
+Github 上有一个开源的库，专门来做这种事情 [github-markdown-css](https://github.com/sindresorhus/github-markdown-css)。
+
+issues 的存在，使我的博客不再是一个多用户系统，从那时开始，脱离了 CSDN。
+
+当时没有买域名，直接用的服务器 ip 来访问，部署采用的宝塔。`npm run build` 之后将 `dist` 放到宝塔。
+
+## 第四代博客
+
+第四代博客，前端框架采用 `React`。当时 `GraphQL` 概念被提出，确实是一个较好的解决方案，一次查询获取所有数据。
+热爱新技术的我自然不能放过，于是对第三代进行重构。
+
+选型后端依然采用白嫖 `Github issues` 的方式。第一，不需要额外的服务器开销；第二，之前的博客文章可以复用。
+
+> Github api 有两种，一种 Rest 风格，另外一种就是 GraphQL 风格。
+
+前端选型采用 `React` + `Apollo GraphQL`。
+实现时，博客列表的加载、文章详情的加载还加入了一些动画效果。
+
+印象比较深的是当时对 `GraphQL` 一知半解，不知道 `GraphQL` 一些缓存的优化、分页；包括高级 api `useQuery`、`useMutation`；
+更是不知道 `Fragment` 的存在。
+当时只能通过 gql 实例去拼串。
+
+当时也做了一些封装之类的，比如请求文章详情时，只需要调用某个函数，传入对应的参数即可。如下所示：
+
+```js fn.js mark=6:12
+import gql from './graphql'
+
+export function queryPostDetail(postID) {
+  return gql.query(
+    // 伪代码
+    `query xxx(variable${postID}) {
+        node {
+            title,
+            createTime,
+            ...
+        }
+    }`
+  )
+}
+```
+
+```js main.jsx mark=4
+import { queryPostDetail } from './utils'
+
+function App() {
+  const detail = await queryPostDetail(1)
+  return (
+    <>
+      {detail}
+      {/* do someting... */}
+    </>
+  )
+}
+```
+
+## 最终版
+
+最终版就是你们看到的这个样子，也算完成自己学生时代的一个梦想。
+
+最终版架构：`Next.js` + `Serverless` + `Paas` + `Github actions`。
+
+关于最终版博客 `feature` 介绍，会在下一篇博客提到，到时链接会贴在这里。
+
+## 后记
+
+> 整体发展史大概是这样子，一些细节方面后续 check 下，先到这~
+
+-- THE END --
+
+```
+
+```
