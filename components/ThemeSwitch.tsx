@@ -45,18 +45,16 @@ const ThemeSwitch = () => {
       className="color-scheme-switch-wrapper"
       aria-label="Toggle Dark Mode"
       onClick={changeTheme}
-      onKeyDown={changeTheme}
     >
-      <label htmlFor="color-scheme-switch">
-        <input
-          type="checkbox"
-          name="color-scheme-switch"
-          id="color-scheme-switch"
-          checked={theme === 'dark' || nextTheme === 'dark'}
-          className="color-scheme-switch"
-          onChange={() => {}}
-        />
-      </label>
+      <input
+        type="checkbox"
+        name="color-scheme-switch"
+        id="color-scheme-switch"
+        checked={theme === 'dark' || nextTheme === 'dark'}
+        className="color-scheme-switch"
+        onChange={() => {}}
+      />
+      <label htmlFor="color-scheme-switch" />
     </div>
   )
 }

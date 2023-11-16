@@ -1,3 +1,6 @@
+.color-scheme-switch-wrapper {
+  display: flex;
+}
 .color-scheme-switch {
   position: absolute;
   white-space: nowrap;
