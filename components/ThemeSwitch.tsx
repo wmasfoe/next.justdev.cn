@@ -1,38 +1,39 @@
 'use client'
 /* eslint-disable jsx-a11y/label-has-associated-control, jsx-a11y/no-static-element-interactions, jsx-a11y/label-has-for */
-import { useEffect, useState, useLayoutEffect, MouseEvent, TouchEvent, KeyboardEvent } from 'react'
+import { useEffect, useState, useLayoutEffect, useSyncExternalStore, MouseEvent, TouchEvent, KeyboardEvent } from 'react'
 import { useTheme } from 'next-themes'
 import '../css/ThemeSwitch.css'
 
+function useSystemTheme() {
+  const mediaQueryListDark = window?.matchMedia('(prefers-color-scheme: dark)')
+
+  function getSnapshot() {
+    return mediaQueryListDark.matches ? 'dark' : 'light'
+  }
+  function subscribe(callback) {
+    mediaQueryListDark.addEventListener('change', callback)
+    return () => {
+      mediaQueryListDark.removeEventListener('change', callback)
+    }
+  }
+  const theme = useSyncExternalStore(subscribe, getSnapshot)
+  return theme
+}
+
 const ThemeSwitch = () => {
   const [mounted, setMounted] = useState(false)
+  const systemTheme = useSystemTheme()
   const { theme: nextTheme, setTheme: setNextTheme, resolvedTheme: resolvedNextTheme } = useTheme()
 
   // When mounted on client, now we can show the UI
   useEffect(() => setMounted(true), [])
 
-  const [theme, setTheme] = useState('wait')
-
   useLayoutEffect(() => {
-    const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)')
-
-    function handleChange() {
-      const theme = mediaQueryListDark.matches ? 'dark' : 'light'
-      setTheme(theme)
-      setNextTheme(theme)
-    }
-
-    handleChange()
-
-    mediaQueryListDark.addEventListener('change', handleChange)
-    return () => {
-      mediaQueryListDark.removeEventListener('change', handleChange)
-    }
-  }, [setNextTheme])
+    setNextTheme(systemTheme)
+  }, [setNextTheme, systemTheme])
 
   const changeTheme = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
-    setTheme(theme === 'dark' ? 'light' : 'dark')
-    setNextTheme(theme === 'dark' ? 'light' : 'dark')
+    setNextTheme(nextTheme === 'dark' ? 'light' : 'dark')
     event.preventDefault()
   }
 
@@ -51,7 +52,7 @@ const ThemeSwitch = () => {
         type="checkbox"
         name="color-scheme-switch"
         id="color-scheme-switch"
-        checked={theme === 'dark' || nextTheme === 'dark'}
+        checked={nextTheme === 'dark'}
         className="color-scheme-switch"
         onChange={() => {}}
       />
