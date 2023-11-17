@@ -7,10 +7,7 @@ import MobileNav from './MobileNav'
 // import ThemeSwitch from './ThemeSwitch'
 import SearchButton from './SearchButton'
 
-const ThemeSwitch = dynamic(
-  () => import('./ThemeSwitch'),
-  { ssr: false }
-)
+const ThemeSwitch = dynamic(() => import('./ThemeSwitch'), { ssr: false })
 
 const Header = () => {
   return (

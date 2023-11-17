@@ -1,6 +1,14 @@
 'use client'
 /* eslint-disable jsx-a11y/label-has-associated-control, jsx-a11y/no-static-element-interactions, jsx-a11y/label-has-for */
-import { useEffect, useState, useLayoutEffect, useSyncExternalStore, MouseEvent, TouchEvent, KeyboardEvent } from 'react'
+import {
+  useEffect,
+  useState,
+  useLayoutEffect,
+  useSyncExternalStore,
+  MouseEvent,
+  TouchEvent,
+  KeyboardEvent,
+} from 'react'
 import { useTheme } from 'next-themes'
 import '../css/ThemeSwitch.css'
 
