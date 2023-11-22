@@ -3,24 +3,73 @@ title: 用户体验之 CLS
 date: '2023-11-21'
 tags: ['CLS', 'UX', 'CumulativeLayoutShift']
 draft: true
-summary: CLS 是用户体验中不可缺失的一部分,来看看什么是CLS,以及如何优化CLS
+summary: CLS 是用户体验中不可缺失的一部分，是一个以用户为中心、用来衡量可视区域元素稳定性的重要标准，可以帮助我们定量计算出用户遇到意料之外的布局偏移的频率。CLS小可以确保我们的页面有一个良好的用户体验，来看看什么是CLS，以及如何优化CLS。
 images: []
 layout: PostLayout
 ---
+
+<a href="#code">点此跳至代码部分</a>
 
 ## 背景
 
 在开始之前我们先了解一下 CLS 及其优化的重要性。
 试想一下，我们**聚精会神**在网页看小说时，尤其是已经阅读了一部分文章后，突然出现几条广告将内容挤到了另一个位置，
-不得不费劲寻找原来的阅读位置；还有~~**应用场景更广泛的地方**~~，当您准备点击页面中某个按钮时，手已经准备落下了，
+不得不费劲寻找原来的阅读位置；还有~~应用场景更广泛的地方~~，当准备点击页面中某个按钮时，手已经准备落下了，
 突然弹出一条广告你来不及反应直接按下，多么糟糕的用户体验。
 
 在业务场景中，这种情况也有可能导致一些重要按钮误删除，不得不增加弹窗进行二次确认。并且布局偏移也可能导致回流重绘，浪费宝贵的浏览器性能。
 
 通常，页面元素发生布局偏移的原因包括异步资源加载、数据的获取以及在 DOM 元素上方动态插入新的元素等。
 具体而言，这些偏移可能源于图片或视频元素尺寸未设置、不受控的第三方广告引入或者组件自身大小的动态调整。
-因此，我们需要一个指标来度量意外偏移对用户**“视觉稳定性”**产生的影响。
+因此，我们需要一个指标来度量意外偏移对用户**视觉稳定性**产生的影响。
 
 ## 什么是 CLS
 
+CLS (Cumulative Layout Shift) 累计布局偏移指标，通过度量**视觉稳定性**反映用户对页面布局偏移所产生的主观视觉体验。
+Google 定义每隔 5 秒作为一个 CLS 监听**时间窗口**，并且要求在每个时间窗口内，相邻两次偏移的时间间隔小于 1 秒。
+在单个时间窗口内，CLS 值是由多个元素的偏移值累加得到的。
+如果页面中的元素布局持续发生偏移（持续时间大于 5 秒），则可能会形成多个时间窗口，每个时间窗口的 CLS 值可能不同。
+在这种情况下，将最大时间窗口的 CLS 值作为该页面的最终 CLS 值。
 
+关于 CLS 的更多概念，请看：[https://web.dev/articles/cls](https://web.dev/articles/cls)
+
+<a id="code"></a>
+
+## 测量 CLS
+
+> CLS 可以在开发阶段来测量，也可以在真实线上测量，开发阶段毕竟不能代替线上环境，
+开发中我们通常只会去加载页面，从而这些工具给页面生成的报告的 CLS 值可能小于线上的 CLS 值。
+
+### Lighthouse
+
+Chrome DevTools 内置了 Lighthouse，可以跑一下 Lighthouse 看看自己的分数。
+
+![img](/static/images/cls/use-lighthouse.png)
+
+勾上 `Performance`，然后点击 `Anayze Page Load` 就可以啦。
+来看看本站分数：
+
+![img](/static/images/cls/cls-demo.png)
+
+好好好，下文优化一手，让 CLS 数值变成 0。
+
+### JS 代码测量
+
+一般测量线上 CLS 指标的最简单方法是使用 `web-vitals` 库，该库将我们需要手动测量CLS的所有复杂点都封装到了一个函数中： 
+
+```js
+import { getCLS } from 'web-vitals'
+getCLS(console.log)
+```
+
+也可以使用浏览器的 `Performance API`，
+
+
+更多测量工具:
+- [https://www.webpagetest.org](https://www.webpagetest.org)
+- [https://developers.google.com/speed/pagespeed/insights](https://developers.google.com/speed/pagespeed/insights)
+
+## 更多资料
+
+- [https://support.google.com/webmasters/answer/9205520](https://support.google.com/webmasters/answer/9205520)
+- [https://dev.to/fritzlolpro/enhancing-visual-stability-understanding-cumulative-layout-shift-cls-53mj](https://dev.to/fritzlolpro/enhancing-visual-stability-understanding-cumulative-layout-shift-cls-53mj)
