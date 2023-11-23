@@ -2,7 +2,7 @@
 title: 用户体验之 CLS
 date: '2023-11-21'
 tags: ['CLS', 'UX', 'CumulativeLayoutShift']
-draft: true
+draft: false
 summary: CLS 是用户体验中不可缺失的一部分，是一个以用户为中心、用来衡量可视区域元素稳定性的重要标准，可以帮助我们定量计算出用户遇到意料之外的布局偏移的频率。CLS小可以确保我们的页面有一个良好的用户体验，来看看什么是CLS，以及如何优化CLS。
 images: []
 layout: PostLayout
@@ -62,12 +62,84 @@ import { getCLS } from 'web-vitals'
 getCLS(console.log)
 ```
 
-也可以使用浏览器的 `Performance API`，
+也可以使用浏览器的 `Performance API`:
 
+```ts
+let clsValue = 0;
+let sessionValue = 0;
+let sessionEntries = [];
+function observeHandler(entry: PerformanceObserverEntryList) {
+  for (const entryItem of entry.getEntries()) {
+    if (!entryItem.hadRecentInput) {
+      const firstSessionEntry = sessionEntries[0];
+      const lastSessionEntry = sessionEntries[sessionEntries.length - 1];
+
+      if (
+        sessionValue &&
+        entryItem.startTime - lastSessionEntry.startTime < 1000 &&
+        entryItem.startTime - firstSessionEntry.startTime < 5000
+      ) {
+        sessionValue += entryItem.value;
+        sessionEntries.push(entryItem);
+      } else {
+        sessionValue = entryItem.value;
+        sessionEntries = [entryItem];
+      }
+
+      if (sessionValue > clsValue) {
+        clsValue = sessionValue;
+
+        console.log(
+          `当前 CLS 数值是: ${clsValue} ${
+            clsValue > 0 ? '用户体验不太好哦~' : ''
+          }`
+        );
+      }
+    }
+  }
+}
+
+function getCLS() {
+  const observer = new PerformanceObserver(observeHandler);
+  // 观察 “布局偏移”
+  observer.observe({ type: 'layout-shift', buffered: true });
+}
+
+getCLS();
+```
+
+可以点击这里体验一下 demo ：[https://typescript-vmlwfm.stackblitz.io](https://typescript-vmlwfm.stackblitz.io)
+
+> 最近会将 live editor 迁移到博客中，就不用跳外链了，目前已完成60%，敬请期待。
 
 更多测量工具:
 - [https://www.webpagetest.org](https://www.webpagetest.org)
 - [https://developers.google.com/speed/pagespeed/insights](https://developers.google.com/speed/pagespeed/insights)
+
+## 问题定位及解决
+
+上面通过 Lighthouse 可以查到 CLS 数值，定位导致 CLS 的元素也可以通过 Lighthouse。
+
+![img](/static/images/cls/header-cls.png)
+
+😯，原来是我们的 Header 组件导致的，刷新页面可以看到一开始并没有渲染 `ThemeSwitch` 组件。
+由于整体项目架构采用的是 Next13 / React18，其中 `ThemeSwitch` 用到了客户端 hooks，不能使用服务端组件，
+并且用到了 `window` 来订阅浏览器的明暗状态，也不能使用服务端渲染。
+需要添加 `'use client;'` 前缀和 `{ssr: false}`，导致服务端返回的静态 html 中，并没有这个按钮。然后客户端 JS 执行，组件被渲染，产生 CLS 抖动。
+
+当前这个项目相对来说比较小或者说问题比较明显， CLS 问题比较好分析，可以通过 Lighthouse + 分析代码的方式定位到问题。
+如果一个项目比较大，并且代码不太规范，这种方式可能比较消耗时间和精力。
+
+对于大型项目更加推荐使用 **浏览器插件**，可以直接定位到出现问题的组件。
+
+- [Core Web Vitals](https://chromewebstore.google.com/detail/core-web-vitals/adeniimnihmbpgpbljmnohjpoolmgabj)
+  **推荐使用**，点一下就可以看到当前页面 CLS 数值，并且产生问题的元素高亮显示。
+- [CLS Checker](https://chromewebstore.google.com/detail/cls-checker-journey-furth/ejgjaeamjppjgmjnaaljcocboejdinpj)
+  **推荐使用**，这个插件会记录抖动发生之前页面的状态，你可以直接看到 CLS 抖动之前的页面，看看有哪些不一样的地方。
+- [CLS visualizer](https://chrome.google.com/webstore/detail/jbbeihojggidiclbcneckhcblilapahn)
+  和插件 2 的作用一样，但相对来说不太好用，有一些 bug 会导致页面的宽高溢出，当实在不好定位时，也可以试试它。
+
+明天来着手解决一下~
 
 ## 更多资料
 
