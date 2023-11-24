@@ -1,6 +1,6 @@
 ---
 title: 用户体验之 CLS
-date: '2023-11-21'
+date: '2023-11-24'
 tags: ['CLS', 'UX', 'CumulativeLayoutShift']
 draft: false
 summary: CLS 是用户体验中不可缺失的一部分，是一个以用户为中心、用来衡量可视区域元素稳定性的重要标准，可以帮助我们定量计算出用户遇到意料之外的布局偏移的频率。CLS小可以确保我们的页面有一个良好的用户体验，来看看什么是CLS，以及如何优化CLS。
@@ -141,7 +141,7 @@ getCLS();
 
 现在来动手解决一下，代码里是用 next.js `dynamic` 函数导入的。
 
-```tsx
+```tsx:Header.tsx {3} showLineNumbers
 import dynamic from 'next/dynamic'
 
 const ThemeSwitch = dynamic(() => import('./ThemeSwitch'), { ssr: false })
@@ -156,7 +156,7 @@ export const Header = () => {
 
 这样带来另一个问题，代码里用到了 window 对象，来获取浏览器的明暗主题：
 
-```ts:useSystemTheme.ts
+```ts:useSystemTheme.ts {2} showLineNumbers
 function useSystemTheme() {
   const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)')
 
@@ -176,7 +176,7 @@ function useSystemTheme() {
 
 我们可以把这段逻辑放到 `useEffect` 里面，effect 回调只会在客户端执行，组件就可以同步导入啦~
 
-```tsx:ThemeSwitch.tsx
+```tsx:ThemeSwitch.tsx {1-13} showLineNumbers
 useEffect(() => {
   const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)')
   function handleChange() {
@@ -196,12 +196,65 @@ const changeTheme = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
   setNextTheme(theme === 'dark' ? 'light' : 'dark')
   event.preventDefault()
 }
+
+return <></>
 ```
 
 ```tsx:Header.tsx
 import ThemeSwitch from './ThemeSwitch'
 ```
 
+然后我们看到 `ThemeSwitch` 代码里有这样一段逻辑：
+
+```tsx:ThemeSwitch.tsx {2, 10-12} showLineNumbers
+// When mounted on client, now we can show the UI
+useEffect(() => setMounted(true), [])
+
+const changeTheme = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
+  setTheme(theme === 'dark' ? 'light' : 'dark')
+  setNextTheme(theme === 'dark' ? 'light' : 'dark')
+  event.preventDefault()
+}
+
+if (!mounted) {
+  return null
+}
+
+return (<></>)
+```
+
+在组件实际 mount 之前，需要设置一个同等大小的 `div` 来占位：
+
+```tsx:ThemeSwitch.tsx {22} showLineNumbers
+function App() {
+  // 这里还有一些逻辑
+  return (
+    <div
+      className="color-scheme-switch-wrapper"
+      aria-label="Toggle Dark Mode"
+      onClick={changeTheme}
+    >
+      {mounted ? (
+        <>
+          <input
+            type="checkbox"
+            name="color-scheme-switch"
+            id="color-scheme-switch"
+            checked={theme === 'dark' || nextTheme === 'dark'}
+            className="color-scheme-switch"
+            onChange={() => {}}
+          />
+          <label htmlFor="color-scheme-switch" />
+        </>
+      ) : (
+        <div style={{ width: '40px' }}></div>
+      )}
+    </div>
+  )
+}
+```
+
+现在刷新页面，`Header` 就不会闪动了，在 `ThemeSwitch` 的位置会先渲染一个占位 `div`。
 看看优化后的数值：
 
 ![img](/static/images/cls/opt-cls-value.png)
@@ -212,3 +265,5 @@ import ThemeSwitch from './ThemeSwitch'
 
 - [https://support.google.com/webmasters/answer/9205520](https://support.google.com/webmasters/answer/9205520)
 - [https://dev.to/fritzlolpro/enhancing-visual-stability-understanding-cumulative-layout-shift-cls-53mj](https://dev.to/fritzlolpro/enhancing-visual-stability-understanding-cumulative-layout-shift-cls-53mj)
+
+今儿先到这~
