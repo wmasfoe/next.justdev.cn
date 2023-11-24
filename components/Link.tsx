@@ -15,7 +15,15 @@ const CustomLink = ({ href, ...rest }: LinkProps & AnchorHTMLAttributes<HTMLAnch
     return <a href={href} {...rest} />
   }
 
-  return <a target="_blank" rel="noopener noreferrer" href={href} {...rest} />
+  return (
+    <a
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ wordWrap: 'break-word' }}
+      href={href}
+      {...rest}
+    />
+  )
 }
 
 export default CustomLink
