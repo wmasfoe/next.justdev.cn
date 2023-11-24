@@ -139,7 +139,74 @@ getCLS();
 - [CLS visualizer](https://chrome.google.com/webstore/detail/jbbeihojggidiclbcneckhcblilapahn)
   和插件 2 的作用一样，但相对来说不太好用，有一些 bug 会导致页面的宽高溢出，当实在不好定位时，也可以试试它。
 
-明天来着手解决一下~
+现在来动手解决一下，代码里是用 next.js `dynamic` 函数导入的。
+
+```tsx
+import dynamic from 'next/dynamic'
+
+const ThemeSwitch = dynamic(() => import('./ThemeSwitch'), { ssr: false })
+
+export const Header = () => {
+  return (<ThemeSwitch />)
+}
+```
+
+但 `dynamic` 并不适合首屏就需要渲染的组件，并且 `ThemeSwitch` 没有太大的性能开销。
+可以改成同步组件的形式。
+
+这样带来另一个问题，代码里用到了 window 对象，来获取浏览器的明暗主题：
+
+```ts:useSystemTheme.ts
+function useSystemTheme() {
+  const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)')
+
+  function getSnapshot() {
+    return mediaQueryListDark.matches ? 'dark' : 'light'
+  }
+  function subscribe(callback) {
+    mediaQueryListDark.addEventListener('change', callback)
+    return () => {
+      mediaQueryListDark.removeEventListener('change', callback)
+    }
+  }
+  const theme = useSyncExternalStore(subscribe, getSnapshot)
+  return theme
+}
+```
+
+我们可以把这段逻辑放到 `useEffect` 里面，effect 回调只会在客户端执行，组件就可以同步导入啦~
+
+```tsx:ThemeSwitch.tsx
+useEffect(() => {
+  const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)')
+  function handleChange() {
+    const theme = mediaQueryListDark.matches ? 'dark' : 'light'
+    setTheme(theme)
+    setNextTheme(theme)
+  }
+  handleChange()
+  mediaQueryListDark.addEventListener('change', handleChange)
+  return () => {
+    mediaQueryListDark.removeEventListener('change', handleChange)
+  }
+}, [setNextTheme])
+
+const changeTheme = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
+  setTheme(theme === 'dark' ? 'light' : 'dark')
+  setNextTheme(theme === 'dark' ? 'light' : 'dark')
+  event.preventDefault()
+}
+```
+
+```tsx:Header.tsx
+import ThemeSwitch from './ThemeSwitch'
+```
+
+看看优化后的数值：
+
+![img](/static/images/cls/opt-cls-value.png)
+
+你也可以在这里手动跑一下 Lighthouse。
 
 ## 更多资料
 

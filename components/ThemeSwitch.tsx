@@ -30,24 +30,39 @@ function useSystemTheme() {
 
 const ThemeSwitch = () => {
   const [mounted, setMounted] = useState(false)
-  const systemTheme = useSystemTheme()
   const { theme: nextTheme, setTheme: setNextTheme, resolvedTheme: resolvedNextTheme } = useTheme()
 
   // When mounted on client, now we can show the UI
   useEffect(() => setMounted(true), [])
 
-  useLayoutEffect(() => {
-    setNextTheme(systemTheme)
-  }, [setNextTheme, systemTheme])
+  const [theme, setTheme] = useState('wait')
+
+  useEffect(() => {
+    const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)')
+
+    function handleChange() {
+      const theme = mediaQueryListDark.matches ? 'dark' : 'light'
+      setTheme(theme)
+      setNextTheme(theme)
+    }
+
+    handleChange()
+
+    mediaQueryListDark.addEventListener('change', handleChange)
+    return () => {
+      mediaQueryListDark.removeEventListener('change', handleChange)
+    }
+  }, [setNextTheme])
 
   const changeTheme = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
-    setNextTheme(nextTheme === 'dark' ? 'light' : 'dark')
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+    setNextTheme(theme === 'dark' ? 'light' : 'dark')
     event.preventDefault()
   }
 
-  if (!mounted) {
-    return null
-  }
+  // if (!mounted) {
+  //   return null
+  // }
 
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events
@@ -56,15 +71,21 @@ const ThemeSwitch = () => {
       aria-label="Toggle Dark Mode"
       onClick={changeTheme}
     >
-      <input
-        type="checkbox"
-        name="color-scheme-switch"
-        id="color-scheme-switch"
-        checked={nextTheme === 'dark'}
-        className="color-scheme-switch"
-        onChange={() => {}}
-      />
-      <label htmlFor="color-scheme-switch" />
+      {mounted ? (
+        <>
+          <input
+            type="checkbox"
+            name="color-scheme-switch"
+            id="color-scheme-switch"
+            checked={theme === 'dark' || nextTheme === 'dark'}
+            className="color-scheme-switch"
+            onChange={() => {}}
+          />
+          <label htmlFor="color-scheme-switch" />
+        </>
+      ) : (
+        <div style={{ width: '40px' }}></div>
+      )}
     </div>
   )
 }
