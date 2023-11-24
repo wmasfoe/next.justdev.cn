@@ -223,7 +223,7 @@ if (!mounted) {
 return (<></>)
 ```
 
-在组件实际 mount 之前，需要设置一个同等大小的 `div` 来占位：
+在组件实际 mount 之前，需要设置一个同等大小的 `div` 来占位，当然你也可以用 React 提供的 `lazy` 和 `Suspense`：
 
 ```tsx:ThemeSwitch.tsx {22} showLineNumbers
 function App() {
