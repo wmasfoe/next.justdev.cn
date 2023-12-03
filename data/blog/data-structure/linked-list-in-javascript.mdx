@@ -1,0 +1,99 @@
+---
+title: JavaScript 中的链表
+date: '2023-12-03'
+tags: ['数据结构', '链表', 'linked list']
+draft: true
+summary: 来看看 Javascript 中链表的实现，链表是动态数据结构，因为我们可以轻松添加或删除元素，它甚至可以根据需要增长。就像数组一样，链表按顺序存储元素，但不像数组那样连续存储元素。
+images: []
+layout: PostBanner
+---
+
+## 啥是链表?
+
+链表是为了解决数组问题而发明出来的，它提升了插入、删除效率，而牺牲了查找效率。
+链表的插入、删除效率是 O(1)，因为只要将对应位置元素断链、重连就可以完成插入、删除，而无需关心其他节点。
+相应的查找效率就低了，因为存储空间不是连续的，所以无法像数组一样通过下标直接查找，而需要通过指针不断搜索，所以查找效率为 O(n)。
+
+如图所示：
+
+![img](/static/images/data-structure/linked-list-img.png)
+
+## 实现链表
+
+`Node` 表示链表中的单个节点，有两个属性 `value` `next`。
+
+```js:LinkedList.js showLineNumbers {3-4}
+class Node {
+  constructor(value) {
+    this.value = value;
+    this.next = null;
+  }
+}
+
+const n1 = new Node(1);
+const n2 = new Node(2);
+n1.next = n2;
+
+console.log(n1);
+// Node { value: 1, next: Node { value: 2, next: null } }
+```
+
+把这些单个的 `Node` 整合起来就是链表，接下来看看链表的实现：
+
+```js:LinkedList.js showLineNumbers {17, 25-28}
+class Node {
+  constructor(value) {
+    this.value = value;
+    this.next = null;
+  }
+}
+
+class LinkedList {
+  static isNode(value) {
+    return value instanceof Node;
+  }
+
+  /**
+   * @returns {Node | null}
+   */
+  static createNode(value) {
+    return value === null ? null : LinkedList.isNode(value) ? value : new Node(value);
+  }
+
+  #length = 0;
+  #head = null;
+  #tail = null;
+
+  constructor(head = null) {
+    const nodeValue = LinkedList.createNode(head);
+    this.#head = nodeValue;
+    this.#length++;
+    this.#tail = nodeValue;
+  }
+
+  get size() {
+    return this.#length;
+  }
+  get tail() {
+    return this.#tail;
+  }
+  get head() {
+    return this.#head;
+  }
+}
+
+const l1 = new LinkedList();
+const l2 = new LinkedList(2);
+console.dir(l1.head); // null
+console.dir(l2.head); // Node { value: 2, next: null }
+```
+
+这只是一个结构的实现（我们现在可以 `new` 它了），接下来梳理一下链表的功能，实现它。
+
+- 插入
+- 指定位置插入
+- 插入到链表首位
+- 移除
+- 指定位置移除
+- 变为数组
+- 遍历
