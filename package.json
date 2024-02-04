@@ -79,6 +79,5 @@
       "prettier --write"
     ],
     "data/blog/*.{md,mdx}": "node scripts/updateFrontmatter"
-  },
-  "packageManager": "yarn@3.6.1"
+  }
 }
