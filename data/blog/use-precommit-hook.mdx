@@ -1,0 +1,101 @@
+---
+title: 使用 pre-commit hook 在提交前追加更新日期
+date: '2024-02-04'
+tags: ['git-hooks', ' huksy', 'lint-staged']
+draft: true
+images: []
+layout: PostSimple
+---
+
+## 问题
+
+与采用 `CMS` 实现技术博客不同，在 `Gatsby` 和 `Next` 等框架中获取文章的修改日期可能会有一些麻烦。
+因为这种方式实现的博客是静态的，无服务端的。只能在 Markdown 中手动维护 `frontmatter`。
+手动维护成本太高了，并且也懒得每次改文章的时候打开日历看下日期。
+除非你在 `.git` 文件夹中去查找修改日期。
+但如果 `.git` 目录未与存储库一起部署，则无法访问 git 日志，也无法拉取时间戳；
+或者某一天把这个博客开源出去信息就泄露了。
+
+## 寻找解决方案
+
+冲浪的时候，发现这样一个帖子 [https://twitter.com/monicalent/status/1353327937085464576](https://twitter.com/monicalent/status/1353327937085464576).
+Ta 是在 commit 的时候向 `frontmatter` 追加一个 `updateOn` 的字段。
+值得参考，觉得可行。
+
+## 设置 Husky 和 Lint-staged
+
+```sh
+npm i -D husky lint-staged
+# 添加 Husky 的 hook；它会创建 .husky 目录
+npx husky install
+# 添加 precommit hook，这个 hook 在 commit 之前执行 npm run lint:staged
+npx husky add .husky/pre-commit "npm run lint:staged"
+```
+
+创建 `.lintstagedrc` 或者直接在 package.json 中添加 `lint-staged` 属性。
+
+```json
+{
+  // 我的文章在 data/blog 目录下，所以这个目录下的 md / mdx 文件有 commit 时，会执行这段 script
+  "data/blog/*.{md,mdx}": "node scripts/updateFrontmatter.js"
+}
+```
+
+将 `lint-staged` 配置到 package.json 的 `script` 属性下，因为最终 husky 是执行的 `npm run xx` 指令
+
+```json
+{
+  // ...
+  "scripts": {
+    // ...
+    "lint:staged": "lint-staged"
+  }
+}
+```
+
+## 添加 script
+
+`gray-matter` 是一个专门用来解析 Markdown `frontmatter` 的库。
+
+```javascript
+const fs = require('fs').promises
+const matter = require('gray-matter')
+
+// 给修改的 mdx 文件添加 updatedOn 字段
+const updateFrontmatter = async () => {
+  // mdFilePaths 就是 commit 时更改的文件
+  const [, , ...mdFilePaths] = process.argv
+
+  mdFilePaths.forEach(async (path) => {
+    const file = matter.read(path)
+    const { data: currentFrontmatter } = file
+
+    // 当前文章不是草稿
+    if (!currentFrontmatter.draft) {
+      const updatedFrontmatter = {
+        ...currentFrontmatter,
+        // 追加更新时间
+        updatedOn: new Date().toISOString().slice(0, 10),
+      }
+      file.data = updatedFrontmatter
+      // 转成 markdown 文本
+      const updatedFileContent = matter.stringify(file)
+      // 重新写入
+      fs.writeFile(path, updatedFileContent)
+    }
+  })
+}
+
+updateFrontmatter()
+```
+
+`process.argv` 是什么❓
+因为我们使用 `Husky` 和 `lint-staged` 创建了一个 `git commit` hook。
+这里的意思是，当我们提交包含 Markdown 或 MDX 文件时，
+我们可以运行 JS 脚本并将路径作为参数传递给 `process.argv`。
+
+## 后记
+
+git 还有很多 hook，并且 pre-commit hook 并不是只能做这一件事。
+你还可以用 pre-commit 做很多事情；
+比如将文章中用到的图片上传到 CDN 上，并在文章中替换 等等。
