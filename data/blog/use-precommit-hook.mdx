@@ -8,7 +8,7 @@ tags:
 draft: false
 images: []
 layout: PostSimple
-updatedOn: '2024-02-11'
+updatedOn: '2024-02-24'
 ---
 
 ## 问题
@@ -36,7 +36,7 @@ npx husky install
 npx husky add .husky/pre-commit "npm run lint:staged"
 ```
 
-创建 `.lintstagedrc` 或者直接在 package.json 中添加 `lint-staged` 属性。
+创建 `.lintstagedrc` 或者直接在 package.json 中添加 `lint:staged` 属性。
 
 ```json
 {
@@ -100,5 +100,5 @@ updateFrontmatter()
 
 ## 发散思维
 
-pre-commit hook 并不是只能做这一件事，其实还可以用 pre-commit 将文章中用到的图片上传到 CDN 上并在文章中替换，
-有时间可以试试。
+<GradientText>pre-commit hook</GradientText> 并不是只能做这一件事，其实还可以用 pre-commit 将文章中用到的图片上传到
+CDN 上并在文章中替换，<DitherText>Wow！</DitherText>这个想法不错， 有时间可以试试。
