@@ -27,6 +27,13 @@ go: module gorm.io/driver/sqlite: Get "https://proxy.golang.org/gorm.io/driver/s
 
 因为 `go get` 并没有走你的代理啊！！！！那么如何设置代理呢？
 
+首先检查环境变量，shell 输入 `go env`，
+查看 `go111module="on"`，没🪜查看是否 配置 `GOPROXY`
+推荐两个源：https://goproxy.cn/ https://goproxy.io/ 。
+可以通过 `go env -w ENV_NAME=VALUE` 来设置。
+
+还是不行，走下面的解决方案。
+
 官方指引：[go.dev.wiki](https://go.dev/wiki/GoGetProxyConfig)
 
 我的办法：不就是命令行没有走代理嘛，我直接暴力入手<DitherText>强制</DitherText>它走 http_proxy，执行下面命令：
