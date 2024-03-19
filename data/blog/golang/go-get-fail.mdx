@@ -1,0 +1,53 @@
+---
+title: go-get 遇到 🧱 的解决方法
+date: '2024-03-20'
+tags:
+  - golang
+  - go-module
+  - go-proxy
+  - go-get
+draft: false
+images: []
+layout: PostSimple
+---
+
+使用 go-get 下载依赖经常会超时。
+
+```sh
+go: module gorm.io/gorm: Get "https://proxy.golang.org/gorm.io/gorm/@v/list": dial tcp: lookup proxy.golang.org: i/o timeout
+go: module gorm.io/driver/sqlite: Get "https://proxy.golang.org/gorm.io/driver/sqlite/@v/list": dial tcp: lookup proxy.golang.org: i/o timeout
+```
+
+使用 `go-get` 下载依赖时，即使开了🪜也依然会报错。解决方法其实有两种：
+
+- 最简单的，从 `github.com/golang` 找到对应的包并下载到 `$GOPATH/src/golang.org/x/` 下
+- 第二种就是🪜
+
+## 为什么明明开了🪜，还是没办法 `go-get`?
+
+因为 `go get` 并没有走你的代理啊！！！！那么如何设置代理呢？
+
+官方指引：[go.dev.wiki](https://go.dev/wiki/GoGetProxyConfig)
+
+我的办法：不就是命令行没有走代理嘛，我直接暴力入手<DitherText>强制</DitherText>它走 http_proxy，执行下面命令：
+
+```sh
+export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890
+```
+
+> 根据你🪜的端口号执行，不要无脑粘贴。
+
+再去下载 `gorm`：
+
+```sh
+$ go get gorm.io/gorm
+
+go: downloading gorm.io/gorm v1.25.8
+go: downloading github.com/jinzhu/now v1.1.5
+go: downloading github.com/jinzhu/inflection v1.0.0
+go: added github.com/jinzhu/inflection v1.0.0
+go: added github.com/jinzhu/now v1.1.5
+go: added gorm.io/gorm v1.25.8
+```
+
+<DitherText>Wow！</DitherText> <GradientText>完结撒花✿✿ヽ(°▽°)ノ✿</GradientText>

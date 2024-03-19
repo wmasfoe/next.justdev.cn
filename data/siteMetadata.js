@@ -1,9 +1,9 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'Jiaqi.Li Blog',
+  title: "Jiaqi.Li 's Blog",
   author: 'Jiaqi.Li',
-  headerTitle: 'Jiaqi.Li Blog',
-  description: 'hi, 欢迎来到我的博客.',
+  headerTitle: "Jiaqi.Li 's Blog",
+  description: '遇到问题，解决问题。',
   language: 'zh-cn',
   theme: 'system', // system, dark or light
   siteUrl: 'https://blog.justdev.cn',
