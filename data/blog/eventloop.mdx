@@ -1,0 +1,124 @@
+---
+title: JavaScript Event Loop
+date: '2024-04-09'
+tags:
+  - eventloop
+draft: true
+images: []
+layout: PostSimple
+---
+
+浏览器事件循环
+
+- requestAnimationFrame
+- requestIdleCallback
+- setTimeout
+- promise.then
+
+nodejs 事件循环
+
+同步代码 -> 异步代码
+异步代码顺序：
+
+- process.nextTick
+- promise.then
+- setTimeout
+- setImmediate
+
+其中 `process.nextTick` 会在 当前调用栈最后、每次 loop 开始前执行一次，
+如果 `process.nextTick` 中递归调用 `process.nextTick` 可能会造成阻塞。nodejs 也会抛出 warning，
+[阮一峰文章这里有提到。](https://www.ruanyifeng.com/blog/2014/10/event-loop.html#:~:text=%E4%BA%8B%E5%AE%9E%E4%B8%8A%EF%BC%8C%E7%8E%B0%E5%9C%A8%E8%A6%81%E6%98%AF%E4%BD%A0%E5%86%99%E5%87%BA%E9%80%92%E5%BD%92%E7%9A%84process.nextTick%EF%BC%8CNode.js%E4%BC%9A%E6%8A%9B%E5%87%BA%E4%B8%80%E4%B8%AA%E8%AD%A6%E5%91%8A%EF%BC%8C%E8%A6%81%E6%B1%82%E4%BD%A0%E6%94%B9%E6%88%90setImmediate%E3%80%82)
+
+`promise.then` 和 浏览器环境一致， `promise` 微任务在 `setTimeout` 之前执行
+
+`setImmediate` 用来把回调放到下一次 loop 的宏队列首位。
+
+> 注意是宏队列首位，下次 loop 中 `process.nextTick`、 `promise.then` 会在它之前执行。见下面代码：
+
+```js:eventloop.js showLineNumbers
+setTimeout(() => {
+  console.log('setTimeout')
+  // 下次loop
+  setTimeout(() => {
+    console.log('next setTimeout')
+  }, 0);
+  process.nextTick(() => console.log('next nextTick'));
+  Promise.resolve().then(() => console.log('next promise'));
+});
+
+// 回调放到下次 loop
+setImmediate(() => {
+  console.log('setImmediate')
+
+  setTimeout(() => {
+    console.log('setImmediate 中 setImmediate')
+  }, 0);
+});
+process.nextTick(() => console.log('nextTick'));
+Promise.resolve().then(() => console.log('promise'));
+(() => console.log('同步代码'))();
+```
+
+结果：
+
+```sh
+同步代码
+nextTick
+promise
+setTimeout
+next nextTick
+next promise
+setImmediate
+next setTimeout
+setImmediate 中 setTimeout
+```
+
+但是，nodejs 文档中提到，`setImmediate` 回调 会在 `setTimeout` 回调 之前执行。但上面示例并不是这样的，
+如果把 `setImmediate` 和 `setTimeout` 被封装在一个 `setImmediate` 里面，结果和文档相符合。见下面改进代码：
+
+```js:eventloop.js showLineNumbers {11-20}
+setTimeout(() => {
+  console.log('setTimeout')
+  // 下次loop
+  setTimeout(() => {
+    console.log('next setTimeout')
+  }, 0);
+
+  process.nextTick(() => console.log('next nextTick'));
+  Promise.resolve().then(() => console.log('next promise'));
+});
+setImmediate(() => {
+  console.log('setImmediate')
+  setTimeout(() => {
+    console.log('setImmediate 中 setTimeout')
+  }, 0);
+
+  setImmediate(() => {
+    console.log('setImmediate 中 setImmediate')
+  });
+});
+process.nextTick(() => console.log('nextTick'));
+Promise.resolve().then(() => console.log('promise'));
+(() => console.log('同步代码'))();
+```
+
+结果：
+
+```sh {9-10}
+同步代码
+nextTick
+promise
+setTimeout
+next nextTick
+next promise
+setImmediate
+next setTimeout
+setImmediate 中 setImmediate
+setImmediate 中 setTimeout
+```
+
+> 可见 `setImmediate` 回调会在 `setTimeout` 回调之前执行。
+
+> 参考资料：
+> [ruanyifeng 再谈 eventloop](https://www.ruanyifeng.com/blog/2014/10/event-loop.html) > [ruanyifeng nodejs 定时器](https://www.ruanyifeng.com/blog/2018/02/node-event-loop.html) > [Ever-Lose NodeJs 的 Event loop 事件循环机制详解](https://www.cnblogs.com/everlose/p/12846375.html) > [Ujjawal Kumar Node.js Event Loop](https://dev.to/endeavourmonk/nodejs-event-loop-46oo) > [知乎「乃乎」的文章 正确理解 Node.js 的 Event loop](https://zhuanlan.zhihu.com/p/80458653)
+> import { JsxEmit } from "typescript"
