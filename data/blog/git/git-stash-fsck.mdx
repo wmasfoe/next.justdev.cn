@@ -5,7 +5,7 @@ tags:
   - git
   - git-fsck
   - git-stash
-draft: true
+draft: false
 images: []
 layout: PostSimple
 ---
@@ -22,4 +22,28 @@ layout: PostSimple
 
 那么直接可以完结撒花了。
 
-如果你执行的是 `git stash clear`，那就需要慢慢找回了。
+如果你执行的是 `git stash clear`，那就需要使用 `git fsck` 命令慢慢找回了。
+`git fsck` 加上 `--unreachable` 参数，可以显示出所有不可访问的对象。
+
+接下来我执行 `git fsck --unreachable`，可以看到如下图所示：
+
+![img](/static/images/git/git-fsck--unxx.png)
+
+这么多 commit hash ， 关键它还是无序的，我并不知道那个是误删除的，只能一个一个去 `git show {hash}`。
+
+我这里下载了 vscode 插件 Gitlens Inspect。可以在终端 command + 鼠标左键 查看。
+一个一个查看，终于找到了它
+
+![img](/static/images/git/git-fsck-target-commit-hash.png)
+
+使用下面这条命令可以更直观的看到。
+
+```sh
+git log --graph --decorate --pretty=oneline --abbrev-commit --all $(git fsck --no-reflogs | grep commit | cut -d' ' -f3)
+```
+
+![img](/static/images/git/git-fsck-log-target-hash.png)
+
+找到了之后，直接 `git stash apply {hash}` 就可以了，终于可以真正的 <GradientText>完结撒花✿✿ヽ(°▽°)ノ✿</GradientText>了。
+
+什么？你想问我采用了什么方法？因为我误删除之后什么操作都没做，直接 command + z 撤销回来了。【狗头】
