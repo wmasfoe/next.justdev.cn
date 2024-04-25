@@ -1,0 +1,25 @@
+---
+title: 恢复丢弃的 git stash 数据
+date: '2024-04-25'
+tags:
+  - git
+  - git-fsck
+  - git-stash
+draft: true
+images: []
+layout: PostSimple
+---
+
+在开发中我们会经常切换一些分支，而切换时候你本地会有一些更改了的代码，但是这些代码还没有写完整，所以我们一般会进行 `git stash save` 本地保存一下。
+然后等后面代码切换回来之后，再 `git stash pop`。
+这天正常 `git stash save` 之后，脑袋一抽 命令输成了 `git stash clear`。当时心中暗道： “md! 坏了”。
+平复下后，感觉应该是能找回的，毕竟有 `git reflog` 这种东西，遂在网上寻找解决方案。
+
+首先，如果你执行的是 `git stash drop` 命令，终端会输出这条 stash 的 hash。
+你直接 `git stash apply {hash}` 就可以了。如下图所示：
+
+![img](/static/images/git/git-stash-apply-drop-hash.png)
+
+那么直接可以完结撒花了。
+
+如果你执行的是 `git stash clear`，那就需要慢慢找回了。
