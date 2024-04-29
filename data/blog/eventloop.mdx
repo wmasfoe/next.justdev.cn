@@ -8,14 +8,14 @@ images: []
 layout: PostSimple
 ---
 
-浏览器事件循环
+## 浏览器事件循环
 
 - requestAnimationFrame
 - requestIdleCallback
 - setTimeout
 - promise.then
 
-nodejs 事件循环
+## Node.js 事件循环
 
 同步代码 -> 异步代码
 异步代码顺序：
@@ -25,15 +25,15 @@ nodejs 事件循环
 - setTimeout
 - setImmediate
 
-其中 `process.nextTick` 会在 当前调用栈最后、每次 loop 开始前执行一次，
+其中 `process.nextTick` 会在 当前调用栈最后 或者说 每次 loop 开始前执行一次，
 如果 `process.nextTick` 中递归调用 `process.nextTick` 可能会造成阻塞。nodejs 也会抛出 warning，
 [阮一峰文章这里有提到。](https://www.ruanyifeng.com/blog/2014/10/event-loop.html#:~:text=%E4%BA%8B%E5%AE%9E%E4%B8%8A%EF%BC%8C%E7%8E%B0%E5%9C%A8%E8%A6%81%E6%98%AF%E4%BD%A0%E5%86%99%E5%87%BA%E9%80%92%E5%BD%92%E7%9A%84process.nextTick%EF%BC%8CNode.js%E4%BC%9A%E6%8A%9B%E5%87%BA%E4%B8%80%E4%B8%AA%E8%AD%A6%E5%91%8A%EF%BC%8C%E8%A6%81%E6%B1%82%E4%BD%A0%E6%94%B9%E6%88%90setImmediate%E3%80%82)
 
 `promise.then` 和 浏览器环境一致， `promise` 微任务在 `setTimeout` 之前执行
 
-`setImmediate` 用来把回调放到下一次 loop 的宏队列首位。
+`setImmediate` 用来把回调放到下一次 loop 的 **宏队列** 首位。
 
-> 注意是宏队列首位，下次 loop 中 `process.nextTick`、 `promise.then` 会在它之前执行。见下面代码：
+> 注意是 **宏队列** 首位，下次 loop 中 `process.nextTick`、 `promise.then` 会在它之前执行。见下面代码：
 
 ```js:eventloop.js showLineNumbers
 setTimeout(() => {
