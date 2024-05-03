@@ -40,3 +40,6 @@ db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 ```
 
 emmm... 感觉框架的设计应该以用户定义为准，一些自动优化的设置（比如自动加 s）需要使用者手动开启，排查真的让人抓狂...
+
+最后来一手广告，我开源了一套基于 gin + gorm 框架的服务端模版 [gin-server-template](https://github.com/wmasfoe/gin-server-template)，
+其中包括了 yaml 配置文件、log 封装、swagger 生成等功能，希望大家可以试用，并指出其中不足之处，感谢~。
