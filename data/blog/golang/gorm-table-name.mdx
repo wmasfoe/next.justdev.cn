@@ -1,0 +1,42 @@
+---
+title: gorm 查表自动加 s 问题
+date: '2024-05-04'
+tags:
+  - gorm
+  - golang
+draft: false
+images: []
+layout: PostSimple
+---
+
+可恶啊，表里明明有数据，查出来却是空的，难道是 goroutine 的锅？一顿排查，最后发现日志里显示表名不存在。
+
+![img](/static/images/golang/gorm-query-table-append-s-log.png)
+
+想要解决需要在 model 层实现 `TableName` 方法，返回表名就可以了。如下代码所示：
+
+```go
+package model
+
+type UserBasic struct {
+	gorm.Model
+	Name string
+}
+
+func (u UserBasic) TableName() string {
+	return "user_basic"
+}
+```
+
+或者在 grom 配置中设置：
+
+```go
+dsn := "root:xxx"
+db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+  NamingStrategy: schema.NamingStrategy{
+    SingularTable: true, // 使用单数表名
+  },
+})
+```
+
+emmm... 感觉框架的设计应该以用户定义为准，一些自动优化的设置（比如自动加 s）需要使用者手动开启，排查真的让人抓狂...
