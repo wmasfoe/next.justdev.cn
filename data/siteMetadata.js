@@ -3,7 +3,7 @@ const siteMetadata = {
   title: "Jiaqi.Li 's Blog",
   author: 'Jiaqi.Li',
   headerTitle: "Jiaqi.Li 's Blog",
-  description: '遇到问题，解决问题。',
+  description: '“Never memorize something that you can look up.” - Albert Einstein',
   language: 'zh-cn',
   theme: 'system', // system, dark or light
   siteUrl: 'https://blog.justdev.cn',
