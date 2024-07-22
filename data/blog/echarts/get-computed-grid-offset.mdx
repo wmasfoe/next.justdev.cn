@@ -1,0 +1,80 @@
+---
+title: 获取echarts计算后的grid边距
+date: '2024-07-22'
+tags: ['echarts']
+draft: false
+images: []
+layout: PostSimple
+---
+
+前几天的开发中遇到了这样一个需求：
+
+我们的气泡图会有一个象限标签，这个标签要求要和 echarts 的 grid 轴间距是 8px。
+由于开启了 `grid.containLabel` 这样会使 grid 轴根据 axis 的 label 长度变化，所以写固定的值是不可以的。
+
+之前的方案是计算 data 中的最大值，再按 `fontSize * 最大值的字符数` 从而估算出 gridLeft 的距离，
+top 值就按照配置传入的值来计算。
+算是勉强能用，但会有一些极限的情况，比如 1 和 9 它的字符宽度是不一样的。
+
+今天正好有时间打算优化一下，翻了翻 echarts 的文档都没有找到有关的信息，直到最后 Google 的时候发现这样一条 issue：
+[https://github.com/apache/echarts/issues/18302](https://github.com/apache/echarts/issues/18302)。
+随后继续 Google `echarts.getModel()`，发现一条[文章](https://www.jianshu.com/p/873c07d33c25)用到了 `getModel()`，这个方法好像可以获取到 echarts 内部的一些信息。
+然后我试了试 `getModel().getCompnent('grid')` 发现真的有值，并且发现一个属性 coordinateSystem （嘿嘿，最近背单词刚好背到了这个，翻译成中文是 坐标系统）：
+
+![img](/static/images/echarts/getModel.getComponent.grid.png)
+
+> 这个方法没有对外开放，是不稳定的（上面 issue 有提到），所以文档搜不到，大家在使用时记得用 lock 文件锁住 echarts 版本。
+
+好，那么接下来给出解决方案。
+
+我们既然可以通过 `getModel().getCompnent('grid').coordinateSystem._rect` 获取到 grid 距离 top、left 的距离，还有 `canvas` 元素的宽高，
+那么我们也可以计算出 right 和 bottom，只需要用 容器的宽度 - `_rect.left` - canvas 元素的宽度得到的就是 right 值，bottom 同理。
+
+代码：
+
+```js
+function getGridOffset(chartInstance) {
+  // 距离轴的偏移
+  const OFFSET = 8
+
+  const grid = chartInstance.getModel().getComponent('grid')
+
+  const leftValue = grid.coordinateSystem._rect?.x
+  const topValue = grid.coordinateSystem._rect?.y
+
+  // canvas 的宽高
+  const canvasWidth = grid.coordinateSystem._rect?.width
+  const canvasHeight = grid.coordinateSystem._rect?.height
+
+  const oContainer = document.getElementById('chart')
+  // 容器的宽高
+  const containerWidth = parseFloat(getComputedStyle(oContainer).width)
+  const containerHeight = parseFloat(getComputedStyle(oContainer).height)
+
+  // right 和 bottom 不能直接取到，需要通过 container.width - canvas.width - leftValue
+  const rightValue = Math.ceil(containerWidth - canvasWidth - leftValue)
+  const bottomValue = Math.ceil(containerHeight - canvasHeight - topValue)
+
+  // 外部用到的值，需要加上 OFFSET
+  const usingLeft = leftValue + OFFSET + 'px'
+  const usingRight = rightValue + OFFSET + 'px'
+  const usingTop = topValue + OFFSET + 'px'
+  const usingBottom = bottomValue + OFFSET + 'px'
+
+  // 最后 return 出来的就是可以直接用的 grid 值啦，如果你的代码不需要offset，直接去掉就行
+  return {
+    left: usingLeft,
+    right: usingRight,
+    top: usingTop,
+    bottom: usingBottom,
+  }
+}
+```
+
+看看效果：
+
+![img](/static/images/echarts/grid.left.result.png)
+
+完整代码我已上传到 codesandbox: [https://codesandbox.io/p/sandbox/vigorous-haibt-xgwtcq](https://codesandbox.io/p/sandbox/vigorous-haibt-xgwtcq)
+
+respect !!!
