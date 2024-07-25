@@ -1,8 +1,8 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: "Jiaqi.Li 's Blog",
-  author: 'Jiaqi.Li',
-  headerTitle: "Jiaqi.Li 's Blog",
+  title: "Jay's Blog",
+  author: 'Jay',
+  headerTitle: "Jay's Blog",
   description: '“Never memorize something that you can look up.” - Albert Einstein',
   language: 'zh-cn',
   theme: 'system', // system, dark or light
