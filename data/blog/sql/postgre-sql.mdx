@@ -26,12 +26,13 @@ echo 'export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-到这一步算是安完了，下面坑来了，和 mysql 不一样。
-PostgreSQL 不能通过 `xx -u root -p` 进入，
+到这一步算是安完了，下面坑来了。
+和 mysql 不一样，PostgreSQL 不能通过 `xx -u root -p` 进入，
 psql 在启动的时候需要指定数据库、然后指定 user （远端需要指定 host）。
 
 我们可以输入 `psql -l` 会列你当前电脑里存在的数据库，默认只有三个数据库：
-`postgres tmeplate0 template1`，我们需要先使用默认用户进入 postgres 数据库，
+`postgres template0 template1`，
+我们需要先使用默认用户进入 postgres 数据库，
 然后再新建角色、新建数据库、将数据库转移到我们新建的角色下。命令如下：
 
 ```sh
@@ -48,7 +49,7 @@ GRANT ALL PRIVILEGES ON DATABASE dev_test01 TO dev;
 ```
 
 接下来再 `psql -l`，你就可以看到刚刚新建的数据库，owner 就是 dev。
-然后再登录就可以啦~
+然后再登录就可以🌶
 
 ```sh
 psql -U dev -d dev_test01
