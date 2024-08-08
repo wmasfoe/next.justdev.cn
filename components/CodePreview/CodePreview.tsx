@@ -17,7 +17,7 @@ const CodePreview = ({ path }: CodePreviewProps) => {
 
   const codeString = useMemo(() => {
     try {
-      const code = require(`!!raw-loader!../code-snippet/${path}.tsx`).default
+      const code = require(`!!raw-loader!../../code-snippet/${path}.tsx`).default
       const filteredCode = code.replace(/'use client'\n/, '')
       return filteredCode
     } catch (error) {

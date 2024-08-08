@@ -2,6 +2,7 @@
 
 import hljs from 'highlight.js'
 import { useMemo } from 'react'
+import './style.css'
 
 const Code = ({ code: rawCode }: { code: string }) => {
   const code = useMemo(() => (rawCode ?? '').trim(), [rawCode])

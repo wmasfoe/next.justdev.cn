@@ -1,0 +1,5 @@
+@import 'highlight.js/styles/atom-one-dark.css';
+
+pre.overflow-x-auto {
+  padding: 0;
+}
