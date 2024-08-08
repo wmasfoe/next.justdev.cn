@@ -4,6 +4,7 @@ import type { MDXComponents } from 'mdx/types'
 import Image from './Image'
 import CustomLink from './Link'
 import { GradientText, DitherText } from './post-components/Text'
+import CodePreview from './CodePreview/CodePreview'
 
 export const components: MDXComponents = {
   Image,
@@ -12,4 +13,5 @@ export const components: MDXComponents = {
   pre: Pre,
   DitherText,
   GradientText,
+  CodePreview,
 }
