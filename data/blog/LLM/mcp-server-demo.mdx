@@ -1,0 +1,175 @@
+---
+title: MCP 在 server 端的探索
+date: '2025-03-22'
+tags: ['LLM', 'MCP']
+draft: true
+summary: Manus 的爆火，让这玩意在社区也愈发火热，我们来浅浅的探索一下 MCP 是个什么东西、能干什么。
+images: []
+layout: PostSimple
+---
+
+MCP: Model Context Protocol 模型上下文协议
+
+<TOCInline toc={props.toc} />
+
+## 是什么？
+
+最近在研究 MCP 的 server 端实现，**MCP 就是定义了一套 LLM 与 代码之间的通信协议**。
+
+举个例子：我们有一个功能是使用 JS 实现的，但在 Python 这里需要复用 JS 代码的功能进行计算，难道使用 Python 通过命令行执行 JS 脚本吗？太唐了。
+MCP 解决了这个问题，它定义了一套协议，如下所示：
+
+```json
+{
+  "mcpServers": {
+    "tool1": {
+      "command": "uv", // 使用uv执行下面的代码
+      "args": [
+        "--directory",
+        "/Users/jay/code/ai/mcp-demo/test-mcp-server", // python 代码入口的绝对路径
+        "run", // 执行的命令 build? run?
+        "tool.py" // 执行的文件
+      ],
+      "disabled": false
+    }
+  }
+}
+```
+
+> Windows 电脑配置文件应该有改动。command 要改成 PowerShell，uv 要放到 args 数组中。
+
+## 能做什么？
+
+通过上面的解释，MCP 看起来没啥实际的意义，一套协议（或者说规范）而已，实际的代码还是要自己编写。它能用来干什么呢？
+
+上文说到，MCP 定义的是 **LLM 和代码** 之间的通信协议。也就是说，我们可以在向 LLM 提问时，让 LLM 执行**已经写好的代码**，帮我们做一些事情。目前大部分 LLM 的信息都是具有滞后性的，所有的信息都是截止到了训练的那一刻。
+
+> 我们可以通过编写代码、也可以使用其他人已经做好的支持 MCP 协议的代码 来扩展功能。
+
+我想到的可以做的事情：
+
+- 通过 MCP 来给 LLM 增加一些实时性的内容；
+- 操作一些本地的数据、资源；
+- 访问硬件的能力；
+- 帮我们查看 PR、merge PR；
+- ……
+
+> 你或许想问：LLM 怎么知道是想让它直接回答，还是调用 MCP 服务进行代码的执行，然后返回结果呢？
+> 保持住好奇心，看下文的实现部分就明白了。
+
+## 怎么做？
+
+### 一个简单的例子
+
+我们先来尝试一个简单的例子，我这里有一个**错误的求和功能**（对你没有看错，是错误的），假如我们输入 `1 + 1` 那么它返回 11 🤣，这很 JS。
+
+首先需要安装 mcp 的官方 SDK：
+
+```sh
+uv add "mcp[cli]"
+```
+
+代码如下所示：
+
+```python showLineNumbers {7-16}
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("sum")
+
+@mcp.tool()
+def sum(first_num: int, second_num: int) -> int:
+    """
+        这是一个错误的求和功能，它将两个 int 类型的值通过字符串的形式拼接
+
+    Args:
+        first_num (int): 3
+        second_num (int): 2
+
+    Returns:
+        int: 32
+    """
+    return int(str(first_num) + str(second_num))
+
+if __name__ == "__main__":
+    # Initialize and run the server
+    mcp.run(transport="stdio")
+
+```
+
+你可能注意到上面代码中有一个 DocString（多行注释），**这行注释就是给 LLM 看的**。我们在向 MCP 客户端注册 MCP 服务时。客户端会读取这个文件中的代码，记录代码的功能（主要是通过这里的 DocString）。然后向 LLM 提问时，遇到 MCP server 可以解决的内容，就会去调用对应的 MCP server。最后通过 LLM 对结果进行整合，然后答复。
+
+这代码太抽象了，接下来需要一个实现了 MCP 的 client 端，我们可以先尝试使用已经支持 MCP 的 app，比如 Claude Desktop、cursor、Cherry Studio 等。
+
+#### 在客户端使用
+
+接下来需要配置一个 JSON，这个 JSON 中定义了 LLM 可以使用的 MCP server。
+
+**搁哪配置？** 你可以在对应的 app 中找到 MCP 选项，如果你使用 cursor：
+
+![image-20250329225053078](/static/images/llm/image-20250329225053078.png)
+
+就会打开一个 JSON 文件，名字一般是 mcp.json，在这里进行配置。
+
+例子如下：
+
+```json showLineNumbers
+{
+  "mcpServers": {
+    "sum": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/Users/jay/code/ai/mcp-demo/bilibili-mcp-server",
+        "run",
+        "test_tool.py"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
+```
+
+现在我向 LLM 询问 “帮我错误的计算一下 7+3 等于多少？”；LLM 会在 MCP 中寻找有没有对应的功能。找到了之后会询问你，是否使用这个功能，点击 Approve 之后，会使用这个 MCP server。
+
+![image-20250329230523694](/static/images/llm/image-20250329230523694.png)
+
+> 成功执行的前提是，你的电脑安装了对应的运行环境，比如这个例子需要用到 uv 和 Python sdk
+
+### 一个稍显复杂的例子
+
+我们现在想让 cursor 在 bilibili 中搜索一些东西，比如瀑布流布局应该怎么写，CSS 过渡怎么用 等等。
+其实就是让 LLM 支持了访问 bilibili 的能力，并返回一些教程、视频等等。
+
+这也体现了 MCP 的强大之处，我们可以使用现有的库很轻松的扩展 LLM 的能力。
+
+比如 Python 有一个 `bilibili-api-python` 的第三方库，我们借用这个第三方库就可以让 LLM 检索 B 站中的内容。
+步骤和上面的例子一样，代码如下所示：
+
+```python showLineNumbers
+from mcp.server.fastmcp import FastMCP
+from bilibili_api import sync, search
+
+# Initialize FastMCP server
+mcp = FastMCP("bilibili mcp server")
+
+@mcp.tool()
+def general_search(keyword: str) -> dict:
+    """
+    Search Bilibili API with the given keyword.
+
+    Args:
+        keyword: Search term to look for on Bilibili
+
+    Returns:
+        dict: Dictionary containing the search results from bilibili
+    """
+    return sync(search.search(keyword))
+
+if __name__ == '__main__':
+    mcp.run(transport='stdio')
+```
+
+现在也算一名老手了，在 client app 中注册 mcp server。然后提问 “B站中关于 CSS 瀑布流布局，最推荐看哪个教程？”
+
+![image-20250329234304065](/static/images/llm/image-20250329234304065.png)
