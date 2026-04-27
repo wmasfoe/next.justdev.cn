@@ -17,7 +17,7 @@ export const GET: APIRoute = async () => {
       acc[year].push(post);
       return acc;
     },
-    {} as Record<number, typeof sortedPosts>
+    {} as Record<number, typeof sortedPosts>,
   );
 
   // Sort years descending

@@ -24,7 +24,7 @@ async function loadGoogleFont(font: string, text: string, weight: number): Promi
 }
 
 async function loadGoogleFonts(
-  text: string
+  text: string,
 ): Promise<Array<{ name: string; data: ArrayBuffer; weight: number; style: string }>> {
   const fontsConfig = [
     {
@@ -45,7 +45,7 @@ async function loadGoogleFonts(
     fontsConfig.map(async ({ name, font, weight, style }) => {
       const data = await loadGoogleFont(font, text, weight);
       return { name, data, weight, style };
-    })
+    }),
   );
 
   return fonts;

@@ -33,10 +33,10 @@ I'm Peter Steinberger, an iOS developer, entrepreneur, and open source contribut
 
 | Command                | Action                                      |
 | :--------------------- | :------------------------------------------ |
-| `npm install`          | Installs dependencies                       |
-| `npm run dev`          | Starts local dev server at `localhost:4321` |
-| `npm run build`        | Build the production site to `./dist/`      |
-| `npm run preview`      | Preview the build locally, before deploying |
+| `pnpm install`         | Installs dependencies                       |
+| `pnpm run dev`         | Starts local dev server at `localhost:4321` |
+| `pnpm run build`       | Build the production site to `./dist/`      |
+| `pnpm run preview`     | Preview the build locally, before deploying |
 
 ## Deployment
 

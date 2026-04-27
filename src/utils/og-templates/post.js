@@ -232,6 +232,6 @@ export default async (post) => {
       height: 630,
       embedFont: true,
       fonts: await loadGoogleFonts(post.data.title + post.data.author + "steipete.me" + "by"),
-    }
+    },
   );
 };
