@@ -32,10 +32,10 @@ interface Site {
 // Site configuration
 export const SITE: Site = {
   website: "https://blog.justdev.cn/",
-  author: "jacky",
+  author: "Jacky",
   profile: "https://blog.justdev.cn/about",
   desc: "hello",
-  title: "jacky",
+  title: "Jacky's Blog",
   ogImage: "avatar.jpg",
   lightAndDarkMode: true,
   postPerIndex: 10,
@@ -49,8 +49,8 @@ export const SITE: Site = {
     url: "https://github.com/wmasfoe/steipete.me/edit/main/",
   },
   dynamicOgImage: true,
-  lang: "en",
-  timezone: "America/Los_Angeles",
+  lang: "zh-CN",
+  timezone: "Asia/Shanghai",
 };
 
 export const SITE_TITLE = SITE.title;

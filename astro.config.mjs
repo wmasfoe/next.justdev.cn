@@ -105,8 +105,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "avatar.jpg"],
       manifest: {
-        name: "jacky",
-        short_name: "jacky",
+        name: "JackyLi",
+        short_name: "Jacky",
         description: "hello",
         theme_color: "#006cac",
         background_color: "#fdfdfd",
