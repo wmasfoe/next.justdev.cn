@@ -1,0 +1,1448 @@
+---
+title: 函数式编程
+pubDatetime: 2023-05-17T00:00:00+00:00
+tags: ['fp', 'functional programming', '函数式编程']
+draft: false
+description: 函数式编程是一个很古老的概念，早于第一台计算机的诞生。函数式编程是随着 react 的流行而受到越来越多的关注（就跟 google 地图和 gmail 带火了 Ajax 一样）React 的高阶组建使用了高阶函数，而高阶函数就是函数式编程的一个特性。
+---
+
+## 概念
+
+函数式编程（Functional Programming）FP 是编程范式之一，我们常听说的的编程范式还有面向对象和面向过程编程(按照步骤实现)，他们是并列关系。
+
+- 面向对象编程 把现实世界的对象抽象成为程序世界的类和对象，通过封装继承多态演示事物之间的联系。
+
+- 函数式编程的思维方式：把现实世界中事物和事物的联系抽象到程序世界（对运算过程进行抽象）
+
+  - 程序的本质：根据输入通过某种运算获得相应的输出，程序开发过程中会涉及到很多有输入和输出的函数
+
+  - x ->(联系，映射)->y x->f(x)
+
+  - 函数式编程中的函数不是指的是程序中的函数（方法），而是数学中函数即映射的关系，例如 y = sin（x），是 x 和 y 的映射关系（x 的值确定了 y 的值也就确定了）
+
+  - 相同的输入始终要得到相同的输出（纯函数）
+
+  - 一句话总结 ：函数式编程用来描述数据（函数）之间的映射
+
+```js
+// 非函数式
+let num1 = 2
+let num2 = 3
+let sum = num1 + num2
+console.log(sum)
+
+// 函数式
+function add(n1, n2) {
+  //运算过程的抽象 add
+  return n1 + n2
+}
+```
+
+使用函数式编程的好处：
+
+- 函数式编程可以抛弃 this
+
+- 打包时可以更好的利用 tree shaking 过滤无用代码
+
+- 方便测试，方便并行处理
+
+- 有很多库可以帮助我们进行函数式开发，**lodash** underscore ramda
+
+## 函数是一等公民
+
+学习函数式编程首先要回顾以下知识
+
+- 函数是一等公民
+
+- 高阶函数
+
+- 闭包
+
+### 函数是一等公民 （First Class Function）
+
+在 JavaScript 中，函数就是一个普通的对象（可以用 new function()），我们可以把函数存储到变量/数组中，它还可以作为另外一个函数的参数和返回值，甚至我们还可以在运行时构建函数。
+
+```js
+new Function('alert(1)')
+```
+
+- 把函数赋值给变量
+
+  ```js
+  let fn = function () {
+    console.log('Hello First class Function')
+  }
+  // 示例
+  const BlogController = {
+    index(posts) {
+      return Views.index(posts)
+    },
+    show(posts) {
+      return Views.show(posts)
+    },
+    create(attrs) {
+      return Db.create(attrs)
+    },
+    update(post, attrs) {
+      return Db.update(post, attrs)
+    },
+    destory(post) {
+      return Db.destory(post)
+    },
+  }
+  // 优化
+  // 由于函数名和返回值的函数名一致，我们可以做一定的优化
+  const BlogController = {
+    index: Views.index,
+    show: Views.show,
+    create: Db.create,
+    update: Db.update,
+    destory: Db.destory,
+  }
+  ```
+
+  函数是一等公民，是高阶函数和柯里化的基础。
+
+## 高阶函数
+
+什么是高阶函数？
+
+- 高阶函数（Higher-order function）高阶组件（Higher-order component）
+
+  - 可以把函数作为参数传递给另外一个函数
+
+  - 可以把函数作为另一个函数的返回结果
+
+- 函数作为参数
+
+  在 js 中，很多数组的方法都是以函数作为参数的，我们可以模拟 forEach 和 filter
+
+  - forEach
+
+    ```js
+    // 每次使用 forEach的时候，调用的方法可能不一样，
+    // 这时候，我们可以把函数的定义交给用户，让用户在使用时，把函数当作参数传入。
+    function forEach(array, fn) {
+      for (let i = 0; i < array.length; i++) {
+        fn(array[i])
+      }
+    }
+    // 测试
+    let arr = [1, 2, 3, 4]
+    forEach(arr, (item) => {
+      console.log(item)
+    })
+    ```
+
+  - filter (返回满足条件的数组元素)
+
+    ```js
+    function filter(arr, fn) {
+      let res = []
+      for (let i = 0; i < arr.length; i++) {
+        if (fn(arr[i])) {
+          res.push(arr[i])
+        }
+      }
+      return res
+    }
+    // 测试
+    let arr = [1, 2, 3]
+    let res = filter(arr, (item) => {
+      return item > 2
+    })
+    console.log(res)
+    ```
+
+    函数作为参数的优点？可以不考虑内部的具体实现，可以自定义规则。
+
+- 函数作为返回值
+
+  如果函数作为返回值，则是用一个函数生成一个函数。
+
+  ```js
+  function makeFun() {
+    let msg = 'hello function'
+    return function () {
+      console.log(msg)
+    }
+  }
+  const fn = makeFn()
+  fn()
+  makeFn()()
+  ```
+
+  再来尝试一下 once 函数，在 JQuery 中指的是为 Dom 元素绑定一个只执行一次的事件，而在 lodash 中则是对一个函数只执行一次。我们模拟一下 lodash 中的 once
+
+  只执行一次的函数有什么意义呢？函数不是为了重复调用而出现的吗？
+
+  想象一个场景，在做支付的时候，一个订单不管用户点多少次按钮，只执行一次。
+
+  ```js
+  function once(fn) {
+    let done = false
+    return function () {
+      if (!done) {
+        done = true
+        return fn.apply(this, arguments)
+      }
+    }
+  }
+  let pay = once(function (money) {
+    console.log(`支付了:${money} RMB`)
+  })
+  pay(100)
+  pay(100)
+  pay(100)
+  pay(100)
+  ```
+
+  在闭包和函数柯里化中，我们会不停的使用。
+
+### 高阶函数的意义
+
+抽象可以屏蔽细节，只需要关注我们的目标。高阶函数就是为了抽象通用的问题。
+
+```js
+// 面向过程的方式
+let arr = [1, 2, 3, 4]
+for (let i = 0; i < arr.length; i++) {
+  console.log(arr[i])
+}
+// 高阶函数
+arr.forEach((element) => {
+  console.log(element)
+})
+```
+
+循环的过程可以不关注，只关注具体每次循环要做的事情。用 forEach 和 filter 等函数就可以解决通用的问题。高阶函数还可以使代码更加简洁。
+
+### 常用的高阶函数
+
+- forEach
+
+- map
+
+  ```js
+  const map = (array, fn) => {
+    let res = []
+    for (let value of array) {
+      res.push(fn(value))
+    }
+    return res
+  }
+
+  let arr = [1, 2, 3, 4]
+  const arr1 = map(arr, (item) => {
+    return item * item
+  })
+  console.log(arr1)
+  ```
+
+- filter
+
+- every 判断数组中的每一个元素是否都匹配某一个条件
+
+  ```js
+  const every = (array, fn) => {
+    // 假设全员匹配
+    let res = true
+    for (let value of array) {
+      // 通过条件进行判断
+      res = fn(value)
+      // 如果有一个元素不匹配，则终止循环，返回res
+      if (!res) {
+        break
+      }
+    }
+    return res
+  }
+  console.log(every(arr, (item) => item > 0))
+  ```
+
+- some 判断数组中的元素是否满足某个条件
+
+  ```js
+  const some = (array, fn) => {
+    let res = false
+    for (let value of array) {
+      res = fn(value)
+      if (res) {
+        break
+      }
+    }
+    return res
+  }
+  ```
+
+- find/findIndex
+
+- reduce
+
+- sort
+
+## 闭包
+
+闭包（closure）：函数和其周围的状态（词法环境）的引用捆绑在一起形成的闭包
+
+- 可以在另一个作用域中调用一个函数的内部函数，并且访问到该函数作用域中的成员
+
+```js
+function makeFun() {
+  let msg = 'hello function'
+  return function () {
+    console.log(msg)
+  }
+}
+const fn = makeFn()
+fn()
+makeFn()()
+
+function once(fn) {
+  let done = false
+  return function () {
+    if (!done) {
+      done = true
+      return fn.apply(this, arguments)
+    }
+  }
+}
+let pay = once(function (money) {
+  console.log(`支付了:${money} RMB`)
+})
+pay(100)
+pay(100)
+pay(100)
+pay(100)
+```
+
+当外部对内部有引用时，函数内部的成员并不会随着函数的销毁而销毁。
+
+- 在另一个作用域中，调用函数内部的函数
+
+- 内部函数可以访问到内部成员
+
+闭包其实类似“封装”。外部永远无法直接更改内部成员的值。
+
+闭包的本质：函数在执行的时候会被放在一个执行栈上，当函数执行完毕之后会从执行栈上删除，**但是堆上的作用域成员因为被外部引用不能释放**，因此内部函数已然可以访问外部的函数成员。
+
+### 闭包案例
+
+修改 pow 函数，让求一个数的平方或者三次方时，不去每次都传递第二个参数。
+
+```js
+Math.pow(4, 2)
+Math.pow(5, 2)
+```
+
+写一个函数生成器：
+
+```js
+function makePower(power) {
+  return function (number) {
+    return Math.pow(number, power)
+  }
+}
+// 平方
+let power2 = makePower(2)
+let power3 = makePower(3)
+console.log(power2(4))
+console.log(power2(5))
+```
+
+![](/Users/shihangwei/Documents/MyNote/Web/函数式编程/images/2021-01-04-00-50-21-image.png)
+
+在调试过程中，我们可以看到，调用 makePower 时，存在一个 Closuer 闭包。
+
+## 纯函数
+
+### 纯函数的概念
+
+纯函数：相同的输入，永远会得到相同的输出，并且没有任何可观察的副作用。
+
+- 纯函数类似数学中的函数（用来描述输入和输出的关系），y = f(x)
+
+  ![](/Users/shihangwei/Documents/MyNote/Web/函数式编程/images/2021-01-04-00-58-06-image.png)
+
+- lodash 是一个纯函数功能库，提供了对数组，数字，对象，字符串，函数等的一些操作方法。
+
+- 数组的 slice 和 splice 分别是纯函数和不纯的函数
+
+  - slice 返回数组的指定部分，不会改变原有数组
+
+    ```js
+    let array = [1, 2, 3, 4, 6]
+
+    console.log(array.slice(0, 3))
+    console.log(array.slice(0, 3))
+    console.log(array.slice(0, 3))
+    ```
+
+    多次调用并不会有其他结果，**对相同的输入始终得到相同的输出**
+
+  - splice 对数组进行操作，并返回该数组，会改变原有数组。
+
+    ```js
+    let array = [1, 2, 3, 4, 6]
+
+    console.log(array.splice(0, 3))
+    console.log(array.splice(0, 3))
+    console.log(array.splice(0, 3))
+    ```
+
+自己写一个纯函数其实很简单，对于纯函数来说，必须有输入（参数）和输出（返回值）。
+
+```js
+function add(a, b) {
+  return a + b
+}
+```
+
+函数式编程不会保留计算中间的结果，所以变量是不可变的（无状态的）
+
+由于纯函数的特性，我们可以把一个函数的结果交给另外一个函数处理。（函数组合）
+
+### Lodash
+
+使用：安装依赖
+
+`npm i lodash --save`
+
+演示方法
+
+first / last / toUpper / reverse / each / includes / find / findIndex
+
+```js
+const _ = require('lodash')
+const array = ['zhangsan', 'lisi', 'wangwu', 'zhaoliu']
+console.log(_.first(array)) // zhangsan
+console.log(_.last(array)) // zhaoliu
+console.log(_.toUpper(_.first(array))) // ZHANSAN
+// console.log(array.reverse()) // 没有参数传递，不是纯函数
+// console.log(_.reverse(array))
+
+const res = _.each(array, (item, index) => {
+  console.log(item, index)
+})
+console.log(res) // 返回值为函数本身
+
+// 在ES6 之前，可以使用 includes find 和 findIndex
+```
+
+除了工具函数，还提供了函数柯里化和函数组合的工具。
+
+### 纯函数的好处
+
+- 可缓存
+
+  因为对相同的输入总有相同的输出，对于大量运算过程的函数，可以直接把结果缓存起来。
+
+  记忆函数 memoize
+
+  ```js
+  // 记忆函数
+  const _ = require('lodash')
+
+  function getArea(r) {
+    console.log(r)
+    return Math.PI * r * r
+  }
+
+  let getAreaWithMemory = _.memoize(getArea) // 高阶函数
+  console.log(getAreaWithMemory(10))
+  console.log(getAreaWithMemory(10))
+  console.log(getAreaWithMemory(10))
+  /*
+  10
+  314.1592653589793
+  314.1592653589793
+  314.1592653589793
+  打印结果可知，只调用了一次
+  */
+  ```
+
+  模拟记忆函数
+
+  ```js
+  function memoize(fn) {
+    // 存储执行结果
+    let cache = {}
+    return function () {
+      let key = JSON.stringify(arguments)
+      cache[key] = cache[key] || fn.apply(fn, arguments)
+      return cache[key]
+    }
+  }
+  ```
+
+- 可测试
+
+  让测试变得更为方便
+
+  单元测试其实在断言输出的结果 ，所有的纯函数都是有输入有输出，所以有利于测试。
+
+- 并行处理
+
+  再多线程下，多个线程同时去修改一个变量可能会出现意外的情况
+
+  而纯函数是一个封闭的空间，它只依赖于参数，不会访问共享的内存数据，所以在并行环境下，可以任意的运行纯函数。（Web Worker）
+
+### 副作用
+
+```js
+// 不纯的
+let mini = 18
+function checkAge(age) {
+  return age >= mini
+}
+
+// 纯函的
+
+function checkAge(age) {
+  let mini = 18 // 硬编码 可以通过柯里化解决
+  return age >= mini
+}
+```
+
+如果函数依赖于外部的状态就无法保证输出相同。会带来副作用。
+
+副作用的来源：
+
+- 配置文件
+
+- 数据库
+
+- 用户的输入
+
+所有的外部交互都有可能带来副作用，副作用让方法的通用性下降，不适合扩展和可重用。但是副作用不能完全禁止，尽可能控制他们在可控范围内发生。
+
+## 柯里化（Haskell Brooks Curry）
+
+柯里化演示
+
+```js
+function checkAge(min, age) {
+  return age >= min
+}
+```
+
+该函数现在为纯函数，不受外部变量影响，内部也不存在硬编码。
+
+如果经常使用某个基准值，则可以将代码进行复用。
+
+```js
+console.log(checkAge(18, 20))
+console.log(checkAge(18, 22))
+console.log(checkAge(18, 24))
+```
+
+```js
+function checkAge(min) {
+  return function (age) {
+    return age >= min
+  }
+}
+let checkAge18 = checkAge(18)
+checkAge18(29)
+// ES6
+
+let checkAge = (min) => (age) => age >= min
+```
+
+这其实就是函数的柯里化，
+
+- 当一个函数有多个参数的时候 先传递一部分参数调用他（这部分参数以后永远不变）
+
+- 然后返回一个新的函数接受剩余的参数，返回结果
+
+但是刚刚的柯里化并不彻底，我们需要将任何函数转化为柯里化的函数。
+
+### lodash 里的柯里化
+
+`_curry(func)`
+
+- 功能： 创造一个函数，该函数接受一个或者多个 func 参数，如果 func 所需要的参数都被提供则执行 func，并返回执行的结果，否则继续返回该函数并等待接受剩余的参数
+
+- 参数：需要柯里化的函数
+
+- 返回值：柯里化后的函数
+
+```js
+const _ = require('lodash')
+function getSum(a, b, c) {
+  return a + b + c
+}
+let curried = _.curry(getSum)
+console.log(curried(1, 2, 3))
+console.log(curried(1)(2, 3))
+console.log(curried(1)(2)(3))
+```
+
+curry 可以把一个多元函数转换为一个一元函数，对我们的函数组合很有帮助。
+
+### 柯里化案例
+
+判断字符串中的空白和数字，可以使用 match 方法。
+
+```js
+''.match(/\s+/g) //
+''.match(/\d+/g) //
+```
+
+更通用一些的方法，可以通过柯里化，根据不同的正则表达式，生成相应的匹配函数
+
+```js
+const _ = require('lodash')
+
+let match = _.curry(function (reg, str) {
+  return str.match(reg)
+})
+const haveSpace = match(/\s+/g)
+console.log(haveSpace('hello world'))
+const haveNumber = match(/\d+/g)
+console.log(haveNumber('abc123'))
+```
+
+如果我们想要判断数组中每一个元素是否存在空字符串或者数字，可以再次进行改造。
+
+```js
+const _ = require('lodash')
+
+let match = _.curry(function (reg, str) {
+  return str.match(reg)
+})
+const haveSpace = match(/\s+/g)
+
+const haveNumber = match(/\d+/g)
+// 通过柯里化生成一个新的函数filter
+const filter = _.curry(function (func, array) {
+  return array.filter(func)
+})
+// 通过 filter 生成一个函数 findSpace , 接受一个数组，返回拥有空白字符串的元素。
+const findSpace = filter(haveSpace)
+console.log(findSpace(['zhangsan', 'li si']))
+```
+
+这些函数只需要定义一次，以后都可以无数次的使用。
+
+### 柯里化原理模拟
+
+柯里化函数有两种调用方式，第一种是当传递的参数个数等于原来的函数参数个数时，立即执行该函数。
+
+第二种是当传递的参数个数小于原来的参数个数时，返回一个新的函数，并等待剩余参数传递。
+
+我们想要实现函数的柯里化，需要实现这两种形式的调用。
+
+```js
+function curry(func) {
+  return function curried(...args) {
+    // 通过 rest 方式，接受全部实参，而形参可以通过函数的属性获得
+    // 判断形参和实参的个数
+    if (args.length < func.length) {
+      return function () {
+        // 可以通过闭包获得第一次传入的 args
+        // 第二次传入的参数可以使用 arguments 获得
+        return curried(...args.concat(Array.from(arguments)))
+      }
+    }
+    return func(...args)
+  }
+}
+
+function getSum(a, b, c) {
+  return a + b + c
+}
+let curried = curry(getSum)
+console.log(curried(1)(2)(3))
+```
+
+### 柯里化总结
+
+柯里化可以让我们给一个函数传递较少的参数，得到一个已经记住了某些固定参数的新函数。
+
+这是一种对函数参数的缓存。
+
+让函数变得更为灵活，让函数的粒度更小。
+
+可以把多元函数转换成一元函数，可以组合使用函数产生强大的功能。
+
+## 函数组合
+
+### 概念
+
+我们用纯函数和柯里化很容易写出洋葱代码。`h(g(f(x)))`
+
+- 获取数组的最后一个元素再转换成为大写字母：`_.toUpper(_.first(_.reverse(array)))`
+
+一层包裹这一层的代码，难以阅读和理解，我们把他们称为洋葱代码。
+
+函数组合可以把细粒度的函数重新组合生成一个新的函数。
+
+#### 管道
+
+在函数组合前，我们首先要了解“管道”的概念。
+
+给 fn 函数输入参数 a，返回结果 b，可以把整个数据的处理过程看作一个黑盒管道
+
+![](/Users/shihangwei/Documents/MyNote/Web/函数式编程/images/2021-01-04-17-04-47-image.png)
+
+当 fn 函数比较复杂的时候，我们可以把 fn 拆分成为多个小的函数，此时运算过程中就多了 m ， n 等中间值
+
+![](/Users/shihangwei/Documents/MyNote/Web/函数式编程/images/2021-01-04-17-05-01-image.png)
+
+组合的伪代码可以表达为：
+
+```js
+fn = compose(f1, f2, f3)
+b = fn(a)
+```
+
+我们不需要考虑 f1，f2，f3 产生的中间结果，而只需要关注输入值和输出值即可。
+
+#### 函数组合
+
+函数组合（compose）：如果一个函数要经过多个函数处理才能得到最终的值，这个时候可以把中间过程的函数合并成为一个函数
+
+- 函数就像是数据的管道，函数组合就是把这些管道连接起来，让数据通过多个管道形成最终的结果
+
+- **函数组合默认是从右到左执行**
+
+案例： 求数组中的最后一个元素。
+
+```js
+// 函数组合
+// 我们的洋葱代码并没有减少，而是封装起来了。
+
+function compose(f, g) {
+  // 接受多个函数，返回一个函数，这个函数接受一个输入。
+  return function (value) {
+    return f(g(value))
+  }
+}
+// 演示
+function reverse(array) {
+  return array.reverse()
+}
+function first(array) {
+  return array[0]
+}
+const last = compose(first, reverse)
+console.log(last([1, 2, 3]))
+```
+
+虽然有很多种求数组中最后一个元素的方法，但是我们使用函数组合的方法，可以对函数进行任意的组合，并且代码可以重复使用。
+
+### lodash 中的函数组合
+
+lodash 中的组合函数 flow 或者 flowRight ，它们都可以组合多个函数。
+
+- flow 是从左到右运行
+
+- flowRight 是从右到左运行，使用的更多一些
+
+```js
+// 将数组中的最后一个元素取出来并转换成为大写
+const _ = require('lodash')
+
+const reverse = (arr) => arr.reverse()
+const first = (arr) => arr[0]
+const toUpper = (str) => str.toUpperCase()
+const f = _.flowRight(toUpper, first, reverse)
+console.log(f(['one', 'two', 'three']))
+```
+
+#### 模拟函数组合
+
+flowRight 的参数是不固定的，可能是多个，并且均为纯函数的形式。执行后返回一个函数，该函数接受参数，并且从右到左的传递处理该数据并且进行处理。
+
+```js
+// 将数组中的最后一个元素取出来并转换成为大写
+function compose(...args) {
+  return function (val) {
+    // reduce  对数组的每一个元素，执行一个由我们提供的一个函数
+    // 并将其汇总为一个单个的集合
+    return args.reverse().reduce(function (acc, fn) {
+      return fn(acc)
+    }, val)
+  }
+}
+const reverse = (arr) => arr.reverse()
+const first = (arr) => arr[0]
+const toUpper = (str) => str.toUpperCase()
+const f = compose(toUpper, first, reverse)
+console.log(f(['one', 'two', 'three']))
+// 我们可以使用箭头函数进行简写
+// const compose = (...args) => val => args.reverse().reduce((acc, fn) => fn(acc), val)
+```
+
+### 结合率
+
+函数的组合要满足结合律（associativity）
+
+我们既可以把 g 和 h 组合，也可以把 f 和 g 组合，结果应该是一样的。
+
+```js
+let f = compose(f, g, h)
+let associative = compose(compose(f, g), h) === compose(f, compose(g, h))
+// true
+```
+
+示例：
+
+```js
+const _ = require('lodash')
+
+// const f = _.flowRight(_.toUpper, _.first, _.reverse)
+
+const f = _.flowRight(_.flowRight(_.toUpper, _.first), _.reverse)
+console.log(f(['one', 'two', 'three']))
+```
+
+### 调试
+
+如何调试组合函数
+
+```js
+const _ = require('lodash')
+// 1. 准备函数
+
+// _.split() 拥有多个参数，不宜组合，并且应该放在最右侧
+
+const split = _.curry((sep, str) => _.split(str, sep))
+
+// _.lowerCase()
+
+// _.join() 拥有多个参数，应该继续进行柯里化
+
+const join = _.curry((sep, array) => _.join(array, sep))
+// 2. 组合函数
+const f = _.flowRight(join('-'), _.toLower, split(' '))
+
+console.log(f('NEVER SAY DIE'))
+```
+
+结果为  `n-e-v-e-r-,-s-a-y-,-d-i-e`
+
+那么我们该如何调试呢？如何确定每一步的执行结果呢？很简单，我们可以使用函数组合的特性，插入一个函数，打印返回值并且将结果原样返回即可。
+
+```js
+const log = (res) => {
+  console.log(res)
+  return res
+}
+// 2. 组合函数
+const f = _.flowRight(join('-'), _.toLower, log, split(' '))
+
+console.log(f('NEVER SAY DIE'))
+```
+
+这样我们就可以通过 log 查看 split 处理之后的数据了。
+
+经过排查，我们可以得知，toLower 函数直接将数组转换成了字符串并且变为了小写，我们需要将数组中的每个元素进行小写转换 ，而不是整体转换。
+
+```js
+const _ = require('lodash')
+// 1. 准备函数
+
+// _.split() 拥有多个参数，不宜组合，并且应该放在最右侧
+
+const split = _.curry((sep, str) => _.split(str, sep))
+
+// _.lowerCase()
+
+const map = _.curry((fn, res) => _.map(res, fn))
+
+// _.join() 拥有多个参数，应该继续进行柯里化
+
+const join = _.curry((sep, array) => _.join(array, sep))
+
+// 2. 组合函数
+const f = _.flowRight(join('-'), map(_.toLower), split(' '))
+
+console.log(f('NEVER SAY DIE'))
+```
+
+在调试时，我们可以使用辅助函数，对中间的结果进行排查。
+
+如果调试点比较多，我们可以将 log 再做更改。
+
+```js
+const trace = _.curry((tag, v) => {
+  console.log(tag)
+  return v
+})
+```
+
+### lodash 中的 FP 模块
+
+上面的例子中，我们对 lodash 中的函数重新进行了柯里化的处理，比较麻烦。
+
+lodash 的 fp 模块提供了实用的对函数式编程友好的方法，提供了不可变的方法（auto curried iteratee-first data-last），是已经柯里化的，函数优先，数据置后的。
+
+```js
+const { head } = require('lodash')
+const _ = require('lodash')
+const fp = require('lodash/fp')
+
+_.map(['a', 'b', 'c'], _.toUpper) // 数据优先，函数置后
+_.split('he llo', ' ')
+
+fp.map(fp.toUpper, ['a', 'b', 'c']) // fp模块，函数优先，数据置后，自动柯里化
+console.log(fp.map(fp.toUpper)(['a', 'b', 'c']))
+console.log(fp.split(' ')('he llo'))
+```
+
+所以我们上节的代码就可以修改成为：
+
+```js
+const f = fp.flowRight(fp.join('-'), fp.map(fp.toLower), fp.split(' '))
+```
+
+> 需要注意的是，lodash 和 lodash/fp 中的 map 函数有所不同
+
+### Point Free
+
+Point Free 是一种代码风格，我们可以把数据处理的过程定义成与数据无关的合成运算，不需要关注代表数据的参数，只需要将简单的运算步骤聚合到一起，在使用这种模式之前，我们需要定义一些辅助的基本运算函数（函数组合）
+
+- 不需要指明处理的数据
+
+- 只需要合成运算过程
+
+- 需要定义一些辅助的基本运算函数
+
+```js
+// 非 Point Free
+// Hello World => hello_world
+function f(word) {
+  return word.toLowerCase().replace(/\s+/g, '_')
+}
+// Point Free
+// 过程中，不关系处理的数据
+const fp = require('lodash/fp')
+const f = fp.flowRight(fp.replace(/\s+/g, '_'), fp.toLower)
+```
+
+函数组合其实就是 Point Free 模式。
+
+案例
+
+把一个字符串中的首字母提取，并转换成为大写，使用 . 作为分隔符
+
+```js
+// world wild web ==> W. W. W
+const fp = require('lodash/fp')
+
+// const firstLetterToUpper = fp.flowRight(
+//   fp.join('. '),
+//   fp.map(fp.first),
+//   fp.map(fp.toUpper),
+//   fp.split(' ')
+// )
+const firstLetterToUpper = fp.flowRight(
+  fp.join('. '),
+  fp.map(fp.flowRight(fp.first(), fp.toUpper)),
+  fp.split(' ')
+)
+```
+
+## 函子
+
+### Functor(函子)
+
+到目前位置，我们已经学习了函数式编程的一些基础，但是我们还没有做到如何把副作用控制在可控的范围内，包括异常处理，异步操作等。
+
+在讲解函子之前，我们需要了解为什么要有函子。
+
+先看下面的代码：
+
+```js
+function double(x) {
+  return x * 2
+}
+function add5(x) {
+  return x + 5
+}
+
+var a = add5(5)
+double(a)
+// 或者
+double(add5(5))
+```
+
+我们想要以数据为中心，串行的方式去执行
+
+```js
+;(5).add5().double()
+```
+
+很明显，这样的串行调用就清晰多了。但是要实现这样的串行调用，需要`(5)`必须是一个引用类型，因为需要挂载方法。同时，引用类型上要有可以调用的方法也必须返回一个引用类型，保证后面的串行调用。
+
+```js
+class Num {
+  constructor(value) {
+    this.value = value
+  }
+  add5() {
+    return new Num(this.value + 5)
+  }
+  double() {
+    return new Num(this.value * 2)
+  }
+}
+var num = new Num(5)
+num.add5().double()
+```
+
+我们通过 new Num(5) ，创建了一个 num 类型的实例。把处理的值作为参数传了进去，从而改变了 this.value 的值。我们把这个对象返会出去，可以继续调用方法去处理数据。
+
+通过上面的做法，我们已经实现了串行调用。但是，这样的调用很不灵活。如果我想再实现个减一的函数，还要再写到这个 Num 构造函数里。所以，我们需要思考如何把对数据处理这一层抽象出来，暴露到外面，让我们可以灵活传入任意函数。来看下面的做法：
+
+```js
+class Num {
+  constructor(value) {
+    this.value = value
+  }
+  map(fn) {
+    return new Num(fn(this.value))
+  }
+}
+var num = new Num(5)
+num.map(add5).map(double)
+```
+
+我们创建了一个 map 方法，把处理数据的函数 fn 传了进去。这样我们就完美的实现了抽象，保证的灵活性。
+
+到这里，我们的函子就该正式登场了。
+
+什么是函子？
+
+- 容器：包含值和值的变形关系（这个变形关系就是函数）
+
+- 函子：是一个特殊的容器，通过一个普通的对象来实现，该对象具有 map 方法，map 方法可以运行一个函数对值进行处理（变形关系）
+
+通过定义一个类来描述函子
+
+```js
+// Functor
+class Container {
+  constructor(value) {
+    // 初始化的时候创建一个盒子，盒子的内容是私有的，不对外暴露的
+    this._value = value
+  }
+  // map 接受一个函数，并对值进行处理，最后返回一个新的函子，对新的值进行保存
+  map(fn) {
+    return new Container(fn(this._value))
+  }
+}
+let r = new Container(5).map((x) => x + 1).map((x) => x * x)
+console.log(r)
+```
+
+map 函数返回的是一个函子，我们始终不对外暴露具体的值，而是用函子对值进行维护。
+
+为了让代码更加“函数式”，我们可以使用静态方法对其封装
+
+```js
+// Functor
+class Container {
+  static of(value) {
+    return new Container(value)
+  }
+  constructor(value) {
+    // 初始化的时候创建一个盒子，盒子的内容是私有的，不对外暴露的
+    this._value = value
+  }
+  // map 接受一个函数，并对值进行处理，最后返回一个新的函子，对新的值进行保存
+  map(fn) {
+    return Container.of(fn(this._value))
+  }
+}
+let r = Container.of(5)
+  .map((x) => x + 1)
+  .map((x) => x * x)
+console.log(r)
+```
+
+我们永远不取出函子中保存的值。
+
+- 函数式编程的运算不直接操作值，而是用函子来完成
+
+- 函子就是一个实现了 map 契约的对象
+
+- 我们可以把函子想象成一个盒子，这个盒子里封装了一个值
+
+- 想要处理盒子中的值，我们要给盒子的 map 方法传递一个处理值的函数（纯函数），由这个函数来对值进行处理。
+
+- 最终 map 方法返回一个包含新值的函子。
+
+但是我们的函子存在一些问题，如果在初始化的过程中传入的初始值为 null / undefined ,则会出现一些“副作用”，null 和 undefined ，并不能调用方法。
+
+```js
+Container.of(null).map((x) => x.toUpperCase())
+```
+
+### MayBe 函子
+
+我们在编程的过程中，肯能会遇到很多的错误，需要对这些错误做相应的处理。
+
+MayBe 函子的作用就是可以对外部空值的情况做处理（控制副作用在允许的范围）
+
+```js
+class MayBe {
+  static of(value) {
+    return new MayBe(value)
+  }
+  constructor(value) {
+    this._value = value
+  }
+  map(fn) {
+    return this.isNothing() ? MayBe.of(null) : MayBe.of(fn(this._value))
+  }
+  isNothing() {
+    return this._value === null || this._value === undefined
+  }
+}
+// let r = MayBe.of('hello world').map(x => x.toUpperCase())
+let r = MayBe.of(null).map((x) => x.toUpperCase())
+console.log(r)
+```
+
+MayBe 函子的问题
+
+```js
+let r = MayBe.of('hello world')
+  .map((x) => x.toUpperCase())
+  .map((x) => null)
+  .map((x) => x.split(' '))
+```
+
+我们不清楚哪一步出现了 null
+
+### Either 函子
+
+异常会让函数变得不纯，Either 函子可以用来做异常处理。Either 的处理类似于 if ... else
+
+```js
+class Left {
+  static of(value) {
+    return new Left(value)
+  }
+  constructor(value) {
+    this._value = value
+  }
+  map(fn) {
+    return this
+  }
+}
+class Right {
+  static of(value) {
+    return new Right(value)
+  }
+  constructor(value) {
+    this._value = value
+  }
+  map(fn) {
+    return Right.of(fn(this._value))
+  }
+}
+let r1 = Right.of(12).map((x) => x + 2)
+let r2 = Left.of(12).map((x) => x + 2)
+console.log(r1, r2)
+```
+
+我们可以让 Left 中嵌入错误消息
+
+当出现错误的时候，如果想让函数为纯函数（相同的输入有相同的输出），我们可以在 catch 中使用 Left
+
+```js
+function parseJSON(str) {
+  try {
+    return Right.of(JSON.parse(str))
+  } catch (e) {
+    return Left.of({ error: e.message })
+  }
+}
+let r = parseJSON(`{name:zs}`)
+//Left { _value: { error: 'Unexpected token n in JSON at position 1' } }
+```
+
+### IO 函子
+
+IO 函子中的 \_value 是一个函数，这里是把函数作为值来处理。
+
+IO 函子可以把不纯的动作存储到 \_value 中，延迟执行这个不纯的操作（惰性执行），包装当前的操作为纯函数。
+
+把不纯的操作交给调用者来使用（把不纯的函数延迟到调用时）
+
+```js
+const fp = require('lodash/fp')
+
+class IO {
+  static of(value) {
+    // 将传递的值 x 通过函数包裹起来了，把求值延迟了。需要调用_value
+    // IO 函子最终还是想要一个结果 需要值的时候再取值
+    return new IO(function () {
+      return value
+    })
+  }
+  constructor(fn) {
+    this._value = fn
+  }
+  map(fn) {
+    return new IO(fp.flowRight(fn, this._value))
+  }
+}
+let r = IO.of(process).map((p) => p.execPath)
+console.log(r._value())
+```
+
+IO 函子内部帮我们包装了一些函数，当然我们传递的函数有可能是不纯的操作，我们不管这个操作是不是纯的，IO 函子返回的结果始终是纯的操作，我们调用 map 的时候，始终会返回一个 IO 函子。
+
+而 \_value 属性保留的组合函数，有可能是不纯的，我们在执行时调用它，控制了副作用在可控的范围内发生。
+
+### folktale
+
+函子可以帮助我们控制副作用，进行异常处理，还可以帮我们处理异步操作。
+
+异步任务的实现过于复杂，我们可以使用 folktale 中的 Task 来演示。 Task 函子可以避免回调的嵌套。
+
+forktale 是一个标准的函数式编程库
+
+- 和 lodash ramda 不同，它没有提供很多功能的函数
+
+- 只提供的了一些函数式的处理操作，例如 compose 和 curry 等，以及一些函子 Task ，Either，MayBe 等。
+
+安装
+
+npm install folktale --save
+
+```js
+const { compose, curry } = require('folktale/core/lambda')
+const { toUpper, first } = require('lodash/fp')
+let f = curry(2, (x, y) => x + y)
+// 为了避免出现一些问题，第一个参数为 形参个数。
+// console.log(f(1, 2))
+// console.log(f(1)(2))
+const fn = compose(toUpper, first)
+console.log(fn(['One', 'two']))
+```
+
+### Task 函子
+
+可以将 task 函子想象成 IO 函子的变形。
+
+task 函数执行结束生成一个函子，这个函子是纯的，我们可以在调用（run）异步函数之前对函子进行操作。
+
+```js
+// 读取package.json 的 version
+
+const { task } = require('folktale/concurrency/task')
+const fs = require('fs')
+const { split, find } = require('lodash/fp')
+
+function readFile(filename) {
+  return task((resolver) => {
+    fs.readFile(filename, 'utf-8', (err, data) => {
+      if (err) {
+        resolver.reject(err)
+      }
+      resolver.resolve(data)
+    })
+  })
+}
+readFile('package.json')
+  // 在run之前可以用map进行监听
+  .map(split('\n'))
+  .map(find((x) => x.includes('version')))
+  .run()
+  .listen({
+    onReject: (err) => {
+      console.log(err)
+    },
+    onResolved: (value) => {
+      console.log(value)
+    },
+  })
+```
+
+### Point 函子
+
+Point 函子是实现了 of 静态方法的函子。
+
+of 静态方法是为了避免使用 new 来创建对象，更深层次的含义是，of 方法用来把值放到上下文 Context （把值放到容器中使用 map 来处理值）
+
+我们上面使用的函子，其实都是 Point 函子。
+
+```js
+class Container {
+  static of(value) {
+    return new Container(value)
+  }
+  //...
+}
+```
+
+of 方法的作用就是把值包裹在一个新的函子中并且返回，这个返回的结果就是一个上下文（Context）
+
+调用 of 方法的时候我们获得上下文，之后我们可以在上下文中继续对函子进行操作。
+
+### Monad 函子（单子）
+
+在使用 IO 函子的时候，我们可能会遇到一些问题。
+
+```js
+const fp = require('lodash/fp')
+const fs = require('fs')
+class IO {
+  static of(value) {
+    // 将传递的值 x 通过函数包裹起来了，把求值延迟了。需要调用_value
+    // IO 函子最终还是想要一个结果 需要值的时候再取值
+    return new IO(function () {
+      return value
+    })
+  }
+  constructor(fn) {
+    this._value = fn
+  }
+  map(fn) {
+    return new IO(fp.flowRight(fn, this._value))
+  }
+}
+// 模拟 cat 命令，读取文件并打印
+
+// 读取文件
+// 如果将读文件的操作封装成为一个函数，它依赖外部数据，是不纯的。
+// 所以我们使用函子来进行操作 不直接进行操作。保证当前的操作是纯的：
+// 输入一个函数，返回一个函子
+let readFile = function (filename) {
+  return new IO(function () {
+    return fs.readFileSync(filename, 'utf-8')
+  })
+}
+// 打印文件
+let print = function (x) {
+  return new IO(function () {
+    console.log(x)
+    return x
+  })
+}
+let cat = fp.flowRight(print, readFile)
+// 测试
+let r = cat('package.json')
+console.log(r)
+```
+
+在上面的代码中，我们拿到的 r 其实是一个嵌套的函子
+
+```cmd
+IO(IO(x))
+```
+
+当我们执行 r.\_value()时，实际上是 print 函子在执行，打印出上一步的 IO 函子。
+
+如果我们要读取文件，其实需要更长的调用
+
+```js
+let r = cat('package.json')._value()._value()
+```
+
+但是这存在几个问题：
+
+1. 我们的 print 函子并没有起到应有的作用
+
+2. 调用嵌套函子时，调用链过长
+
+Mobad 函子是可以变扁的 Point 函子。用以解决函子嵌套的问题。
+
+一个函子如果具有 join 和 of 两个方法，并且遵守一些定律，就是一个 Monad
+
+> 函数嵌套使用组合，函子嵌套使用 Monad
+
+join 方法其实直接返回的是函数的调用。
+
+当 IO 函子创建的时候，需要传入一个函数，如果传入的函数返回的是函子，则出现了函子嵌套。我们可以直接通过 join 调用 \_value 获取这个函子
+
+```js
+const fp = require('lodash/fp')
+const fs = require('fs')
+class IO {
+  static of(value) {
+    return new IO(function () {
+      return value
+    })
+  }
+  constructor(fn) {
+    this._value = fn
+  }
+  map(fn) {
+    return new IO(fp.flowRight(fn, this._value))
+  }
+  join() {
+    return this._value()
+  }
+  // 添加 flatMap 方法，使得 map 扁平化
+  flatMap(fn) {
+    // map 执行后会返回一个函子，调用 join, 获取这个函子的 _value 中的 函子
+    return this.map(fn).join()
+  }
+}
+// 模拟 cat 命令，读取文件并打印
+// 读取文件
+let readFile = function (filename) {
+  return new IO(function () {
+    return fs.readFileSync(filename, 'utf-8')
+  })
+}
+// 打印文件
+let print = function (x) {
+  return new IO(function () {
+    console.log(x)
+    return x
+  })
+}
+let cat = fp.flowRight(print, readFile)
+// 测试
+// IOreadFile(IOprint(x))
+// 当我们传递的函数，返回的是值，则调用map，返回的是函子，调用 flatMap
+let r = readFile('package.json').flatMap(print).join()
+```
+
+readFile 调用，生成了一个函子
+
+调用 flatMap ，是由 readFile 产生的函子调用的
+
+- 调用 map ，会将当前函子的 value（readFlie） 和 print 函数合并，返回一个新的函子
+
+- 调用 join 将获取上一步合并的函子的 value 调用后生成的 新的函子（这个 value 中有 print 的部分），即 print 的函子
+
+在实际开发的时候，只需要调用 API 即可
+
+如果读完文件想要处理呢？
+
+```js
+let r = readFile('package.json').map(fp.toUpper).flatMap(print).join()
+```
+
+更为简单的一个例子：
+
+```js
+class Monad {
+  constructor(value) {
+    this.value = value
+  }
+  map(fn) {
+    return this.value ? Maybe.of(fn(this.value)) : Maybe.of(null)
+  }
+  join() {
+    return this.value
+  }
+}
+Monad.of = function (val) {
+  return new Monad(val)
+}
+```
+
+```js
+var a = Monad.of(Monad.of('str'))
+console.log(a.join().map(toUpperCase))
+```

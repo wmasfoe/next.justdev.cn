@@ -1,0 +1,760 @@
+---
+title: JavaScript 中的链表
+pubDatetime: 2023-12-03T00:00:00+00:00
+tags: ['数据结构', '链表', 'linked list']
+draft: false
+description: 来看看 Javascript 中链表的实现，链表是动态数据结构，因为我们可以轻松添加或删除元素，它甚至可以根据需要增长。就像数组一样，链表按顺序存储元素，但不像数组那样连续存储元素。
+---
+
+## 啥是链表?
+
+链表是为了解决数组问题而发明出来的，它提升了插入、删除效率，而牺牲了查找效率。
+链表的插入、删除效率是 O(1)，因为只要将对应位置元素断链、重连就可以完成插入、删除，而无需关心其他节点。
+相应的查找效率就低了，因为存储空间不是连续的，所以无法像数组一样通过下标直接查找，而需要通过指针不断搜索，所以查找效率为 O(n)。
+
+链表最常用的就是单向链表，其结构如下图所示：
+
+![img](/static/images/data-structure/linked-list-img.png)
+
+除此之外还有 双向链表、循环链表。
+
+## 单向链表
+
+单向链表就是只能沿着链表头往下寻找，我们可以用 `Node` 表示链表中的单个节点，有两个属性 `value` `next`。
+
+```js:LinkedList.js showLineNumbers {3-4}
+class Node {
+  constructor(value) {
+    this.value = value;
+    this.next = null;
+  }
+}
+
+const n1 = new Node(1);
+const n2 = new Node(2);
+n1.next = n2;
+
+console.log(n1);
+// Node { value: 1, next: Node { value: 2, next: null } }
+```
+
+把这些单个的 `Node` 整合起来就是链表，接下来看看链表的实现：
+
+```js:LinkedList.js showLineNumbers {17, 25-28}
+class Node {
+  constructor(value) {
+    this.value = value;
+    this.next = null;
+  }
+}
+
+class LinkedList {
+  static isNode(value) {
+    return value instanceof Node;
+  }
+
+  /**
+   * @returns {Node | null}
+   */
+  static createNode(value) {
+    return value === null ? null : LinkedList.isNode(value) ? value : new Node(value);
+  }
+
+  #length = 0;
+  #head = null;
+  #tail = null;
+
+  constructor(value = null) {
+    const nodeValue = LinkedList.createNode(value);
+    this.#head = nodeValue;
+    this.#tail = nodeValue;
+    this.#lengthIncrements(nodeValue);
+  }
+
+  #lengthIncrements(value) {
+    if(LinkedList.isNode(value)) {
+      this.#length++;
+    }
+  }
+  get size() {
+    return this.#length;
+  }
+  get tail() {
+    return this.#tail;
+  }
+  get head() {
+    return this.#head;
+  }
+}
+
+const l1 = new LinkedList();
+const l2 = new LinkedList(2);
+console.dir(l1.head); // null
+console.dir(l2.head); // Node { value: 2, next: null }
+```
+
+这只是链表结构的实现（我们现在可以 `new` 它了），
+并且可以通过 [`getter`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Functions/get) （31-39） 访问链表的首尾以及长度。
+
+接下来梳理一下链表的功能，实现链表的操作：
+
+- 尾插入
+- 指定位置插入
+- 尾移除
+- 指定位置移除
+- 链表转数组
+- 数组转链表
+- 查找
+- 遍历
+
+### 尾插入
+
+类似数组的 `push` 操作，即在链表结尾加入一个新的节点，并使 `tail` 指针指向它。
+
+图示：
+
+![img](/static/images/data-structure/linked-list-append.png)
+
+看看代码实现：
+
+```js:LinkedList.js showLineNumbers {28-39}
+class LinkedList {
+  static isNode(value) {
+    return value instanceof Node;
+  }
+
+  /**
+   * @returns {Node | null}
+   */
+  static createNode(value) {
+    return value === null
+      ? null
+      : LinkedList.isNode(value)
+      ? value
+      : new Node(value);
+  }
+
+  #length = 0;
+  #head = null;
+  #tail = null;
+
+  constructor(value = null) {
+    const nodeValue = LinkedList.createNode(value);
+    this.#head = nodeValue;
+    this.#tail = nodeValue;
+    this.#lengthIncrements(nodeValue);
+  }
+
+  append(value) {
+    const nodeValue = LinkedList.createNode(value);
+    if (this.#length === 0) {
+      this.#head = nodeValue;
+    } else {
+      this.#tail.next = nodeValue;
+    }
+    this.#tail = nodeValue;
+    this.#lengthIncrements(nodeValue);
+
+    return this;
+  }
+
+  #lengthIncrements(value) {
+    if (LinkedList.isNode(value)) {
+      this.#length++;
+    }
+  }
+  get size() {
+    return this.#length;
+  }
+  get tail() {
+    return this.#tail;
+  }
+  get head() {
+    return this.#head;
+  }
+}
+```
+
+### 指定位置插入
+
+可还记得文章一开始给出的链表结构？
+
+![img](/static/images/data-structure/linked-list-img.png)
+
+现在有个 `{ value: 10 }` 节点（我们称为**插入节点**）要插入到 `{ value: 58 }`（我们称为**目标节点**） 的后面，
+我们只需要把目标节点的 `next` 指针指向插入节点（**断链**），然后把插入节点的 `next` 指针指向目标节点之前 `next` 指针指向的节点（**重连**）就可以啦。
+
+图示：
+
+![img](/static/images/data-structure/linked-list-append-index.png)
+
+看看代码实现：
+
+> 代码过长不利于阅读，这里把之前实现的操作删掉了。
+
+```js:LinkedList.js showLineNumbers {29-37, 53-69, 80-86}
+class LinkedList {
+  static isNode(value) {
+    return value instanceof Node;
+  }
+
+  /**
+   * @returns {Node | null}
+   */
+  static createNode(value) {
+    return value === null
+      ? null
+      : LinkedList.isNode(value)
+      ? value
+      : new Node(value);
+  }
+
+  #length = 0;
+  #head = null;
+  #tail = null;
+
+  constructor(value = null) {
+    this.#emptyAppend(value);
+  }
+
+  // 其他操作...
+
+  // 插入到首位
+  unshift(value) {
+    if (this.#length === 0) {
+      return this.#emptyAppend(value);
+    }
+    const nodeValue = LinkedList.createNode(value);
+    nodeValue.next = this.#head;
+    this.#head = nodeValue;
+    this.#lengthIncrements(nodeValue);
+
+    return this;
+  }
+
+  insertAt(value, index) {
+    if (this.#length === 0) {
+      return this.#emptyAppend(value);
+    }
+    // index 没传或者为0，插入首位
+    if(!index || index === 0 || index === 1) {
+      return this.unshift(value);
+    }
+    // index > 链表长度，直接append
+    if(index > this.#length) {
+      return this.append(value);
+    }
+
+    const nodeValue = LinkedList.createNode(value);
+    let currentNode = this.#head;
+    let currentIndex = 1;
+    // 遍历链表，找到插入的位置
+    while(currentIndex < index -1 && currentNode) {
+      currentNode = currentNode.next;
+      currentIndex++;
+    }
+    if(currentNode) {
+      // 操作链表
+      const beforeNextNode = currentNode.next;
+      // 断链
+      currentNode.next = nodeValue;
+      // 重连
+      nodeValue.next = beforeNextNode;
+      this.#lengthIncrements(nodeValue);
+    }
+
+    return this;
+  }
+
+  #lengthIncrements(value) {
+    if (LinkedList.isNode(value)) {
+      this.#length++;
+    }
+  }
+
+  #emptyAppend(value) {
+    const nodeValue = LinkedList.createNode(value);
+    this.#head = nodeValue;
+    this.#tail = nodeValue;
+    this.#lengthIncrements(nodeValue);
+    return this;
+  }
+
+  get size() {
+    return this.#length;
+  }
+  get tail() {
+    return this.#tail;
+  }
+  get head() {
+    return this.#head;
+  }
+}
+```
+
+除了实现 `insertAt` 之外，还实现了 **插入到链表首位** 的功能，可见 `unshift` 方法（第一块高亮区域）。
+另外封装了 `emptyAppend` 方法（第三块高亮区域），当链表为空时，直接调用这个方法。
+
+### 尾移除
+
+尾移除其实就是把链表的最后一项 `pop` 掉。
+
+步骤就是，利用 `while` 循环找到链表的倒数第二项（即 `node.next` 存在），然后将令 `tail` 指针指向 `node`，并把 `node.next = null`。
+在这之前考虑两个边界情况：
+
+- 当前链表为空，进行处理。如果你希望你的链表比较严格，你可以在 `pop` 时 `throw` 一个 `error`；如果希望宽松一点，可以不做操作。
+- 当前链表只有一条数据，直接将 `head` 指针 和 `tail` 指针指向 `null`，并使 `length--`。
+
+和插入操作不同，用户进行 `pop` 操作，希望拿到 `pop` 出来的那个值。所以不能再 `return this`。
+
+下面 **绿色高亮** 为实现的代码。
+
+```diff-js:LinkedList.js showLineNumbers
+class Node {
+  constructor(value) {
+    this.value = value;
+    this.next = null;
+  }
+}
+
+class LinkedList {
+  static isNode(value) {
+    return value instanceof Node;
+  }
+
+  /**
+   * @returns {Node | null}
+   */
+  static createNode(value) {
+    return value === null
+      ? null
+      : LinkedList.isNode(value)
+      ? value
+      : new Node(value);
+  }
+
+  #length = 0;
+  #head = null;
+  #tail = null;
+
+  constructor(value = null) {
+    this.#emptyAppend(value);
+  }
+
+  append(value) {
+    const nodeValue = LinkedList.createNode(value);
+    if (this.#length === 0) {
+      return this.#emptyAppend(nodeValue);
+    }
+
+    this.#tail.next = nodeValue;
+    this.#tail = nodeValue;
+    this.#lengthIncrements(nodeValue);
+
+    return this;
+  }
+
+  unshift(value) {
+    if (this.#length === 0) {
+      return this.#emptyAppend(value);
+    }
+    const nodeValue = LinkedList.createNode(value);
+    nodeValue.next = this.#head;
+    this.#head = nodeValue;
+    this.#lengthIncrements(nodeValue);
+
+    return this;
+  }
+
+  insertAt(value, index) {
+    if (this.#length === 0) {
+      return this.#emptyAppend(value);
+    }
+    // index 没传或者为0，插入首位
+    if (!index || index === 0 || index === 1) {
+      return this.unshift(value);
+    }
+    // index > 链表长度，直接append
+    if (index > this.#length) {
+      return this.append(value);
+    }
+
+    const nodeValue = LinkedList.createNode(value);
+    let currentNode = this.#head;
+    let currentIndex = 1;
+    while (currentIndex < index - 1 && currentNode) {
+      currentNode = currentNode.next;
+      currentIndex++;
+    }
+    if (currentNode) {
+      const beforeNextNode = currentNode.next;
+      currentNode.next = nodeValue;
+      nodeValue.next = beforeNextNode;
+      this.#lengthIncrements(nodeValue);
+    }
+
+    return this;
+  }
+
++  pop() {
++    if (this.#length <= 0) {
++      return null;
++    }
++
++    const lastItem = this.#tail;
++    if (this.#length === 1) {
++      this.#head = null;
++      this.#tail = null;
++      this.#length--;
++
++      return lastItem;
++    }
++
++    let lastItemParent = this.#head;
++    while (lastItemParent?.next?.next) {
++      lastItemParent = lastItemParent.next;
++    }
++    lastItemParent.next = null;
++    this.#tail = lastItemParent;
++    this.#length--;
++
++    return lastItem;
++  }
+
+  #lengthIncrements(value) {
+    if (LinkedList.isNode(value)) {
+      this.#length++;
+    }
+  }
+
+  #emptyAppend(value) {
+    const nodeValue = LinkedList.createNode(value);
+    this.#head = nodeValue;
+    this.#tail = nodeValue;
+    this.#lengthIncrements(nodeValue);
+    return this;
+  }
+
+  get size() {
+    return this.#length;
+  }
+  get tail() {
+    return this.#tail;
+  }
+  get head() {
+    return this.#head;
+  }
+}
+```
+
+### 遍历链表
+
+对于数组我们可以很方便的通过 `for`、`for of` 语法遍历，但对于链表我们只能用 `while` 循环，通过 `next` 指针向下寻找。
+其实我们可以通过 JavaScript 的 [Iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator)
+让我们的链表也可以通过 `for of` 遍历，接下来实现一个 `each` 方法，我们调用这个方法，就可以遍历链表。
+
+`each` 的实现很简单，核心是通过 `Generator Function`，还是下面代码的绿色高亮部分:
+
+```diff-js:LinkedList
+class Node {
+  constructor(value) {
+    this.value = value;
+    this.next = null;
+  }
+}
+
+class LinkedList {
+  static isNode(value) {
+    return value instanceof Node;
+  }
+
+  /**
+   * @returns {Node | null}
+   */
+  static createNode(value) {
+    return value === null
+      ? null
+      : LinkedList.isNode(value)
+      ? value
+      : new Node(value);
+  }
+
+  #length = 0;
+  #head = null;
+  #tail = null;
+
+  constructor(value = null) {
+    this.#emptyAppend(value);
+  }
+
+  append(value) {
+    const nodeValue = LinkedList.createNode(value);
+    if (this.#length === 0) {
+      return this.#emptyAppend(nodeValue);
+    }
+
+    this.#tail.next = nodeValue;
+    this.#tail = nodeValue;
+    this.#lengthIncrements(nodeValue);
+
+    return this;
+  }
+
+  unshift(value) {
+    if (this.#length === 0) {
+      return this.#emptyAppend(value);
+    }
+    const nodeValue = LinkedList.createNode(value);
+    nodeValue.next = this.#head;
+    this.#head = nodeValue;
+    this.#lengthIncrements(nodeValue);
+
+    return this;
+  }
+
+  insertAt(value, index) {
+    if (this.#length === 0) {
+      return this.#emptyAppend(value);
+    }
+    // index 没传或者为0，插入首位
+    if (!index || index === 0 || index === 1) {
+      return this.unshift(value);
+    }
+    // index > 链表长度，直接append
+    if (index > this.#length) {
+      return this.append(value);
+    }
+
+    const nodeValue = LinkedList.createNode(value);
+    let currentNode = this.#head;
+    let currentIndex = 1;
+    while (currentIndex < index - 1 && currentNode) {
+      currentNode = currentNode.next;
+      currentIndex++;
+    }
+    if (currentNode) {
+      const beforeNextNode = currentNode.next;
+      currentNode.next = nodeValue;
+      nodeValue.next = beforeNextNode;
+      this.#lengthIncrements(nodeValue);
+    }
+
+    return this;
+  }
+
+  pop() {
+    if (this.#length <= 0) {
+      return null;
+    }
+    const lastItem = this.#tail;
+
+    if (this.#length === 1) {
+      this.#head = null;
+      this.#tail = null;
+      this.#length--;
+
+      return lastItem;
+    }
+    let lastItemParent = this.#head;
+    while (lastItemParent?.next?.next) {
+      lastItemParent = lastItemParent.next;
+    }
+    lastItemParent.next = null;
+    this.#tail = lastItemParent;
+    this.#length--;
+
+    return lastItem;
+  }
+
++  *each() {
++    let current = this.#head
++    while(current.next) {
++      yield current
++      current = current.next
++    }
++    // while 退出时，只是 next 指针空了，当前 current 还是有值的，再 yield 一次
++    yield current
++  }
+
+  #lengthIncrements(value) {
+    if (LinkedList.isNode(value)) {
+      this.#length++;
+    }
+  }
+
+  #emptyAppend(value) {
+    const nodeValue = LinkedList.createNode(value);
+    this.#head = nodeValue;
+    this.#tail = nodeValue;
+    this.#lengthIncrements(nodeValue);
+    return this;
+  }
+
+  get size() {
+    return this.#length;
+  }
+  get tail() {
+    return this.#tail;
+  }
+  get head() {
+    return this.#head;
+  }
+}
+```
+
+### 链表转数组
+
+借用 `*each` 方法，转数组更简单了🤦🏻。
+
+```diff-js:LinkedList
+class Node {
+  constructor(value) {
+    this.value = value;
+    this.next = null;
+  }
+}
+
+class LinkedList {
+  static isNode(value) {
+    return value instanceof Node;
+  }
+
+  /**
+   * @returns {Node | null}
+   */
+  static createNode(value) {
+    return value === null
+      ? null
+      : LinkedList.isNode(value)
+      ? value
+      : new Node(value);
+  }
+
+  #length = 0;
+  #head = null;
+  #tail = null;
+
+  constructor(value = null) {
+    this.#emptyAppend(value);
+  }
+
+  append(value) {
+    const nodeValue = LinkedList.createNode(value);
+    if (this.#length === 0) {
+      return this.#emptyAppend(nodeValue);
+    }
+
+    this.#tail.next = nodeValue;
+    this.#tail = nodeValue;
+    this.#lengthIncrements(nodeValue);
+
+    return this;
+  }
+
+  unshift(value) {
+    if (this.#length === 0) {
+      return this.#emptyAppend(value);
+    }
+    const nodeValue = LinkedList.createNode(value);
+    nodeValue.next = this.#head;
+    this.#head = nodeValue;
+    this.#lengthIncrements(nodeValue);
+
+    return this;
+  }
+
+  insertAt(value, index) {
+    if (this.#length === 0) {
+      return this.#emptyAppend(value);
+    }
+    // index 没传或者为0，插入首位
+    if (!index || index === 0 || index === 1) {
+      return this.unshift(value);
+    }
+    // index > 链表长度，直接append
+    if (index > this.#length) {
+      return this.append(value);
+    }
+
+    const nodeValue = LinkedList.createNode(value);
+    let currentNode = this.#head;
+    let currentIndex = 1;
+    while (currentIndex < index - 1 && currentNode) {
+      currentNode = currentNode.next;
+      currentIndex++;
+    }
+    if (currentNode) {
+      const beforeNextNode = currentNode.next;
+      currentNode.next = nodeValue;
+      nodeValue.next = beforeNextNode;
+      this.#lengthIncrements(nodeValue);
+    }
+
+    return this;
+  }
+
+  pop() {
+    if (this.#length <= 0) {
+      return null;
+    }
+    const lastItem = this.#tail;
+
+    if (this.#length === 1) {
+      this.#head = null;
+      this.#tail = null;
+      this.#length--;
+
+      return lastItem;
+    }
+    let lastItemParent = this.#head;
+    while (lastItemParent?.next?.next) {
+      lastItemParent = lastItemParent.next;
+    }
+    lastItemParent.next = null;
+    this.#tail = lastItemParent;
+    this.#length--;
+
+    return lastItem;
+  }
+
+  *each() {
+    let current = this.#head
+    while(current.next) {
+      yield current
+      current = current.next
+    }
+    // while 退出时，只是 next 指针空了，当前 current 还是有值的，再 yield 一次
+    yield current
+  }
+
++  toArray() {
++    return [...this.each()].map(v => v.value)
++  }
+
+  #lengthIncrements(value) {
+    if (LinkedList.isNode(value)) {
+      this.#length++;
+    }
+  }
+
+  #emptyAppend(value) {
+    const nodeValue = LinkedList.createNode(value);
+    this.#head = nodeValue;
+    this.#tail = nodeValue;
+    this.#lengthIncrements(nodeValue);
+    return this;
+  }
+
+  get size() {
+    return this.#length;
+  }
+  get tail() {
+    return this.#tail;
+  }
+  get head() {
+    return this.#head;
+  }
+}
+```
+
+持续更新中...

@@ -22,18 +22,18 @@ const { title, description, pubDatetime, modDatetime, heroImage } = Astro.props;
         <article class="post">
           <h1 class="post-title">{title}</h1>
 
-	          <div class="post-meta">
-	            <span>
-	              Posted on <FormattedDate date={pubDatetime} />
-	              {
-	                modDatetime && (
-	                  <span class="last-updated-on">
-	                    · Updated on <FormattedDate date={modDatetime} />
-	                  </span>
-	                )
-	              }
-	            </span>
-	          </div>
+          <div class="post-meta">
+            <span>
+              Posted on <FormattedDate date={pubDatetime} />
+              {
+                modDatetime && (
+                  <span class="last-updated-on">
+                    · Updated on <FormattedDate date={modDatetime} />
+                  </span>
+                )
+              }
+            </span>
+          </div>
 
           {
             heroImage && (
@@ -59,9 +59,9 @@ const { title, description, pubDatetime, modDatetime, heroImage } = Astro.props;
       sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
       document.body.appendChild(sidebarToggle);
 
-	      sidebarToggle.addEventListener("click", () => {
-	        document.getElementById("sidebar")?.classList.toggle("show");
-	      });
-	    </script>
-	  </body>
-	</html>
+      sidebarToggle.addEventListener("click", () => {
+        document.getElementById("sidebar")?.classList.toggle("show");
+      });
+    </script>
+  </body>
+</html>

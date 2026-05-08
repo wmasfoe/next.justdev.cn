@@ -1,0 +1,102 @@
+---
+// Giscus-based comment system, ported from the Next.js project
+// (wmasfoe/next.justdev.cn). Backed by GitHub Discussions in
+// `wmasfoe/blog-comment`. Theme is kept in sync with the site's
+// `data-theme` attribute on <html>.
+//
+// Configurable via PUBLIC_GISCUS_* environment variables (Astro/Vite
+// requires the PUBLIC_ prefix for values that should reach the client).
+// Falls back to the original next.justdev.cn config so the component
+// works out of the box without an .env file.
+
+const env = import.meta.env;
+
+const giscusConfig = {
+  repo: env.PUBLIC_GISCUS_REPO ?? "wmasfoe/blog-comment",
+  repoId: env.PUBLIC_GISCUS_REPOSITORY_ID ?? "R_kgDOJfcBiQ",
+  category: env.PUBLIC_GISCUS_CATEGORY ?? "General",
+  categoryId: env.PUBLIC_GISCUS_CATEGORY_ID ?? "DIC_kwDOJfcBic4CWS_T",
+  mapping: env.PUBLIC_GISCUS_MAPPING ?? "pathname",
+  lang: env.PUBLIC_GISCUS_LANG ?? "zh-CN",
+  strict: "0",
+  reactionsEnabled: "1",
+  emitMetadata: "0",
+  inputPosition: "top",
+  loading: "lazy",
+  origin: "https://giscus.app",
+};
+---
+
+<section id="comments" class="mt-8" data-pagefind-ignore aria-label="Comments">
+  <div class="giscus"></div>
+</section>
+
+<script is:inline define:vars={{ giscusConfig }}>
+  (function () {
+    function currentTheme() {
+      return document.documentElement.getAttribute("data-theme") === "dark"
+        ? "dark"
+        : "light";
+    }
+
+    function injectGiscus() {
+      const mount = document.querySelector("#comments .giscus");
+      if (!mount) return;
+      mount.innerHTML = "";
+
+      const script = document.createElement("script");
+      script.src = `${giscusConfig.origin}/client.js`;
+      script.async = true;
+      script.crossOrigin = "anonymous";
+      script.setAttribute("data-repo", giscusConfig.repo);
+      script.setAttribute("data-repo-id", giscusConfig.repoId);
+      script.setAttribute("data-category", giscusConfig.category);
+      script.setAttribute("data-category-id", giscusConfig.categoryId);
+      script.setAttribute("data-mapping", giscusConfig.mapping);
+      script.setAttribute("data-strict", giscusConfig.strict);
+      script.setAttribute(
+        "data-reactions-enabled",
+        giscusConfig.reactionsEnabled,
+      );
+      script.setAttribute("data-emit-metadata", giscusConfig.emitMetadata);
+      script.setAttribute("data-input-position", giscusConfig.inputPosition);
+      script.setAttribute("data-theme", currentTheme());
+      script.setAttribute("data-lang", giscusConfig.lang);
+      script.setAttribute("data-loading", giscusConfig.loading);
+      mount.appendChild(script);
+    }
+
+    function postThemeToGiscus(theme) {
+      const frame = document.querySelector("iframe.giscus-frame");
+      if (!frame || !frame.contentWindow) return;
+      frame.contentWindow.postMessage(
+        { giscus: { setConfig: { theme } } },
+        giscusConfig.origin,
+      );
+    }
+
+    let observer;
+    function setupThemeObserver() {
+      if (observer) observer.disconnect();
+      observer = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          if (m.attributeName === "data-theme") {
+            postThemeToGiscus(currentTheme());
+          }
+        }
+      });
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"],
+      });
+    }
+
+    function init() {
+      injectGiscus();
+      setupThemeObserver();
+    }
+
+    init();
+    document.addEventListener("astro:after-swap", init);
+  })();
+</script>

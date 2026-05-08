@@ -1,0 +1,160 @@
+---
+title: 在 linux 服务器部署 DeepSeek-R1
+pubDatetime: 2025-02-27T00:00:00+00:00
+tags: ['LLM', 'DeepSeek']
+draft: false
+description: "在低成本 Linux 服务器上部署 DeepSeek-R1 大模型的操作指南。"
+---
+
+## 服务器资源
+
+低配版 1.3 元一小时
+高配版 2 元一小时
+https://aistackdc.com/phone-register?invite_code=654EA4
+
+也可以包月包年，我是选的按量付费。
+
+> 广子，但是真便宜，可以折腾折腾。
+
+## 操作
+
+### ssh 连接
+
+上面这个平台提供给你的是私钥。但你最好本地创建一个密钥对，把公钥给平台，自己留私钥。
+然后创建 ssh，这里我直接用得 mac 自带的 terminal，我们可以通过配置 `.ssh/config` 更方便的连接远程主机。
+
+示例：
+
+```sh
+vi ~/.ssh/config
+```
+
+```sh
+Host temp_llm_remote
+    HostName xxx.xxx.xx.x # 你的远程主机的 IP 地址
+    User root # 用户名
+    Port 1234 # 端口号
+    IdentityFile ~/.ssh/id_remote_llm_temp # 刚 ssh 生成的秘钥地址
+```
+
+然后就可以通过 `ssh temp_llm_remote` 直接连接了。
+
+### linux 下载 ollama
+
+使用 ollama 提供的命令下载：
+
+```sh
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+![image-20250227022335828](/static/images/llm/image-20250227022335828.png)
+
+如果你遇到了一些问题，如上图所示，可以尝试手动下载。如果是 intel GPU：
+
+```sh
+curl -L https://ollama.com/download/ollama-linux-amd64.tgz -o ollama-linux-amd64.tgz
+tar -C /usr -xzf ollama-linux-amd64.tgz # 远端一般是 root 用户，不需要 sudo
+```
+
+> AMD GPU [参看 Github](https://github.com/ollama/ollama/blob/main/docs/linux.md)
+
+再运行 `ollama -v` 就可以看到版本号了。
+
+### ollama run deepseek
+
+其实和在本地运行一样，直接跑 `ollama run deepseek-r1:14b` 就可以。
+但是在服务器有个[坑](https://github.com/ollama/ollama/issues/6204)，你需要先开一个 ssh 把 ollama 跑起来，然后再开一个 ssh pull 模型。
+
+ssh1:
+
+```sh
+ssh temp_llm_remote
+ollama start
+```
+
+ssh2:
+
+```sh
+ssh temp_llm_remote
+ollama run deepseek-r1:14b
+```
+
+然后大功告成~![image-20250227024641698](/static/images/llm/image-20250227024641698.png)
+
+我这里选的 14b，RTX4090+60G 内存，大可尝试 32b。问答时 GPU 使用率才 6%。
+![image-20250227025520596](/static/images/llm/image-20250227025520596.png)
+
+### 作为服务器提供 API
+
+不本地部署，反而折腾服务器就是因为我希望多端都可以使用，并且本地算力也跟不上。
+
+首先需要按照 [readme](https://github.com/ollama/ollama/blob/main/docs/linux.md#adding-ollama-as-a-startup-service-recommended) 在配置文件中添加 ollama.service 配置文件。但执行 `systemctl daemon-reload` 命令可能也有坑。
+终端运行 `ps -p 1 -o comm=` 得到的不是 init
+
+![image-20250227031213369](/static/images/llm/image-20250227031213369.png)
+
+说明这台机器的初始化进程是有问题的。需要 apt 安装该指令：
+
+```sh
+# 备份旧的下载源
+mv /etc/apt/sources.list /etc/apt/sources.list.old
+
+# 创建新的下载源
+vim /etc/apt/sources.list
+```
+
+添加新的下载源（亲测可用）：
+
+```
+deb https://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse
+deb-src https://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse
+
+deb https://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse
+deb-src https://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse
+
+deb https://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse
+deb-src https://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse
+
+deb https://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse
+deb-src https://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse
+```
+
+添加完后 `:wq` 退出，运行 `apt update` 更新下载源。
+
+然后重新安装 systemd systemctl :
+
+```sh
+apt-get install systemd -y
+apt-get install systemctl -y
+```
+
+然后再按照文档执行即可。执行完之后需要在配置文件的 `[Service]`添加下面配置：
+
+```sh
+vi /etc/systemd/system/ollama.service
+```
+
+```
+Environment="OLLAMA_HOST=0.0.0.0"
+Environment="OLLAMA_ORIGINS=*"
+```
+
+然后运行：
+
+```sh
+systemctl daemon-reload
+systemctl restart ollama
+```
+
+然后放开端口，比如 11433
+
+```sh
+ufw allow 11433
+ufw reload
+```
+
+### 参考
+
+- [Ubuntu Linux部署DeepSeek ](https://www.cnblogs.com/dechinphy/p/18699554/deepseek)
+
+- [本地部署 DeepSeek：小白也能轻松搞定！](https://www.cnblogs.com/xiezhr/p/18712410)

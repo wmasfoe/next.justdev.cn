@@ -1,0 +1,168 @@
+---
+title: 浅探浏览器事件循环机制
+pubDatetime: 2025-05-07T00:00:00+00:00
+tags:
+  - eventloop
+draft: false
+description: 最近面试问事件循环相关的概念挺多的，一起系统的学习一下浏览器的事件循环机制。
+---
+
+## 浏览器的进程模型
+
+浏览器是一个多进程多线程的应用程序。
+
+为了避免页面卡死，现代浏览器在启动时会自动启动多个进程。
+
+其中，最主要的进程有：
+
+1. 浏览器进程
+2. 网络进程
+  - 负责加载网络资源。网络进程内部会启动多个线程来处理不同的网络任务。
+3. 渲染进程
+  - 渲染进程启动后，会开启一个**渲染主线程**，主线程负责执行 HTML、CSS、JS 代码
+  - 默认情况下，浏览器会为每个标签页开启一个新的渲染进程，以保证不同的标签页之间不相互影响。
+
+在这其中渲染进程中的渲染主线程是最繁忙的，它需要处理的任务很多，比如：解析HTML、解析CSS、计算样式、布局、执行js 等等。
+**需要注意，渲染线程没办法使用其他线程进行辅助解析HTML、CSS、JS，因为会导致页面渲染不一致。**
+
+既然渲染主线程如此繁忙，那如何保证每个任务在合适的时机进行调度，并且保证页面不卡顿呢？
+因此，**事件循环机制** 应运而生。
+
+渲染主线程（下文称为主线程）用来执行每个任务，每次任务执行完毕会从 **任务队列** 中获取下一个任务；
+其他线程，比如定时器线程在时间到了之后会向 **任务队列** 中添加新的任务，交互线程监听到用户操作时会向任务队列添加新的任务……
+如此往复既可以保证每个任务都由主线程执行，又可以保证每个任务可以在合适的时机进行调度，主线程不会傻傻的等待每个任务需要执行时才会执行，并且执行完成才去执行下个任务。
+
+## 同步与异步
+
+同步任务是指任务可以直接被主线程来执行的，不存在等待这个任务变成 **可执行态**。
+异步任务就是一些无法立即处理的任务，比如：
+
+- 计时器回调（`setTimeout`、`setInterval`）
+- 网络执行成功后需要执行的操作，比如 `fetch`
+- 用户的交互操作，比如 `addEventListener`
+
+上文说到 **主线程负责的事情很多，解析HTML、CSS, 渲染页面等**，如果这时候遇到一个 `fetch` 请求，让主线程去等待请求响应后才去渲染页面。会造成页面极其卡顿(loading 效果怎么展示？)。
+所以，浏览器遇到这种任务时会交给其他线程，让它们去等待这些任务变成 **可执行态**，并将任务插入到任务队列中。主线程去任务队列取这些待执行的任务。
+
+### 异步任务的优先级
+
+任务是没有优先级的，**但任务队列有优先级**。也就是说，主线程优先从优先级高的队列中取任务来执行。
+之前 W3C 将任务队列分为两类：微任务队列、宏任务队列；现在 [W3C 的最新解释](https://html.spec.whatwg.org/multipage/webappapis.html#perform-a-microtask-checkpoint)为：
+
+- 浏览器必须准备好一个微队列，微队列中的任务优先所有其他任务执行
+- 每个任务都有一个任务类型，同一个类型的任务必须在一个队列，不同类型的任务可以分属于不同的队列。
+  在一次事件循环中，浏览器可以根据实际情况从不同的队列中取出任务执行
+
+> Chrome 浏览器中除了微任务之外会优先执行用户交互类的任务（Chrome 有一个交互任务队列，仅次于微任务队列）。
+
+添加到微任务队列的方式为：
+
+1. `Promise.resolve().then()`
+2. `MutationObserver()`
+
+## Node.js 中的事件循环
+
+同步代码 -> 异步代码
+异步代码顺序：
+
+- process.nextTick
+- promise.then
+- setTimeout
+- setImmediate
+
+其中 `process.nextTick` 会在 当前调用栈最后 或者说 每次 loop 开始前执行一次，
+如果 `process.nextTick` 中递归调用 `process.nextTick` 可能会造成阻塞。nodejs 也会抛出 warning，
+[阮一峰文章这里有提到。](https://www.ruanyifeng.com/blog/2014/10/event-loop.html#:~:text=%E4%BA%8B%E5%AE%9E%E4%B8%8A%EF%BC%8C%E7%8E%B0%E5%9C%A8%E8%A6%81%E6%98%AF%E4%BD%A0%E5%86%99%E5%87%BA%E9%80%92%E5%BD%92%E7%9A%84process.nextTick%EF%BC%8CNode.js%E4%BC%9A%E6%8A%9B%E5%87%BA%E4%B8%80%E4%B8%AA%E8%AD%A6%E5%91%8A%EF%BC%8C%E8%A6%81%E6%B1%82%E4%BD%A0%E6%94%B9%E6%88%90setImmediate%E3%80%82)
+
+`promise.then` 和 浏览器环境一致， `promise` 微任务在 `setTimeout` 之前执行
+
+`setImmediate` 用来把回调放到下一次 loop 的 **宏队列** 首位。
+
+> 注意是 **宏队列** 首位，下次 loop 中 `process.nextTick`、 `promise.then` 会在它之前执行。见下面代码：
+
+```js:eventloop.js showLineNumbers
+setTimeout(() => {
+  console.log('setTimeout')
+  // 下次loop
+  setTimeout(() => {
+    console.log('next setTimeout')
+  }, 0);
+  process.nextTick(() => console.log('next nextTick'));
+  Promise.resolve().then(() => console.log('next promise'));
+});
+
+// 回调放到下次 loop
+setImmediate(() => {
+  console.log('setImmediate')
+
+  setTimeout(() => {
+    console.log('setImmediate 中 setImmediate')
+  }, 0);
+});
+process.nextTick(() => console.log('nextTick'));
+Promise.resolve().then(() => console.log('promise'));
+(() => console.log('同步代码'))();
+```
+
+结果：
+
+```sh
+同步代码
+nextTick
+promise
+setTimeout
+next nextTick
+next promise
+setImmediate
+next setTimeout
+setImmediate 中 setTimeout
+```
+
+但是，nodejs 文档中提到，`setImmediate` 回调 会在 `setTimeout` 回调 之前执行。但上面示例并不是这样的，
+如果把 `setImmediate` 和 `setTimeout` 被封装在一个 `setImmediate` 里面，结果和文档相符合。见下面改进代码：
+
+```js:eventloop.js showLineNumbers {11-20}
+setTimeout(() => {
+  console.log('setTimeout')
+  // 下次loop
+  setTimeout(() => {
+    console.log('next setTimeout')
+  }, 0);
+
+  process.nextTick(() => console.log('next nextTick'));
+  Promise.resolve().then(() => console.log('next promise'));
+});
+setImmediate(() => {
+  console.log('setImmediate')
+  setTimeout(() => {
+    console.log('setImmediate 中 setTimeout')
+  }, 0);
+
+  setImmediate(() => {
+    console.log('setImmediate 中 setImmediate')
+  });
+});
+process.nextTick(() => console.log('nextTick'));
+Promise.resolve().then(() => console.log('promise'));
+(() => console.log('同步代码'))();
+```
+
+结果：
+
+```sh {9-10}
+同步代码
+nextTick
+promise
+setTimeout
+next nextTick
+next promise
+setImmediate
+next setTimeout
+setImmediate 中 setImmediate
+setImmediate 中 setTimeout
+```
+
+> 可见 `setImmediate` 回调会在 `setTimeout` 回调之前执行。
+
+> 参考资料：
+> [ruanyifeng 再谈 eventloop](https://www.ruanyifeng.com/blog/2014/10/event-loop.html) > [ruanyifeng nodejs 定时器](https://www.ruanyifeng.com/blog/2018/02/node-event-loop.html) > [Ever-Lose NodeJs 的 Event loop 事件循环机制详解](https://www.cnblogs.com/everlose/p/12846375.html) > [Ujjawal Kumar Node.js Event Loop](https://dev.to/endeavourmonk/nodejs-event-loop-46oo) > [知乎「乃乎」的文章 正确理解 Node.js 的 Event loop](https://zhuanlan.zhihu.com/p/80458653)

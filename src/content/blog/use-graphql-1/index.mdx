@@ -1,0 +1,127 @@
+---
+title: GraphQL 使用 part1
+pubDatetime: 2023-04-02T00:00:00+00:00
+tags: ['graphql', 'xhr', 'ajax']
+draft: false
+description: 来了解一下 GraphQL 吧，一种新的前后端交互方式，节省前后端联调成本。
+---
+
+> 基于 Next12、Apollo v3、webpack
+
+依赖版本：
+
+```jsx
+"dependencies": {
+  "@apollo/client": "^3.7.1",
+  "graphql": "^16.6.0",
+  "next": "12.1.6",
+  "react": "18.2.0",
+  "react-dom": "18.2.0"
+},
+"devDependencies": {
+  "@types/node": "18.11.9",
+  "@types/react": "18.0.25",
+  "@types/react-dom": "18.0.8",
+  "eslint": "8.27.0",
+  "eslint-config-next": "12.2.4",
+  "typescript": "4.8.4"
+}
+```
+
+开始之前，需要去 `Next` 官网过一下入门教程（看英文版，中文版过时了），搭建一个简单的博客 APP，了解 `Next` 的基本使用。
+
+## 接入 GraphQL
+
+`_app.tsx` 中：
+
+```tsx
+// import '../styles/globals.css'
+import type { AppProps } from 'next/app'
+import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client'
+
+const client = new ApolloClient({
+  uri: 'https://api.github.com/graphql',
+  cache: new InMemoryCache(),
+  connectToDevTools: true,
+})
+
+function MyApp({ Component, pageProps }: AppProps) {
+  return (
+    <ApolloProvider client={client}>
+      <Component {...pageProps} />
+    </ApolloProvider>
+  )
+}
+
+export default MyApp
+```
+
+`ApolloProvider` 组件注入了 `client` 对象，这样组件中可以使用 `useApolloClient` 获取 `client` 实例。
+
+或者直接使用 `useQuery`、 `useLazyQuery` hook。这都是后话~
+
+## webpack 解析 gql 文件
+
+[Loading queries with Webpack](https://www.apollographql.com/docs/react/integrations/webpack)
+
+## TS 识别 gql 文件
+
+> 这样只能抑制 TS 编译报错，vscode 下 command+左击无法直接跳转到对应语句，有待优化。
+
+根目录新建 `types` 文件夹（如果没有）
+
+```tsx
+// types/graphql.d.ts
+declare module '*.gql'
+declare module '*.graphql'
+```
+
+## 设置 token
+
+准备工作：
+
+1. Github 申请 `token`（按文档操作）
+2. 顶级目录创建 `local.config.js` ，将生成的 `token` 保存。然后 `.gitignore` 添加创建的这个文件，避免提交到 Github。
+
+文档地址：
+
+[Authentication](https://www.apollographql.com/docs/react/networking/authentication)
+
+> Vue 技术栈参考：
+> [apollo-vue](https://www.apollographql.com/docs/react/networking/authentication/#:~:text=Copy-,VueJS%20example,-%3A)
+
+文档看起来有点复杂，记录一下具体操作过程。
+
+之前：
+
+```tsx
+const client = new ApolloClient({
+  uri: 'https://api.github.com/graphql',
+  cache: new InMemoryCache(),
+  connectToDevTools: true,
+})
+```
+
+现在：
+
+```tsx
+import { token } from '../local.config' // github 生成的 token
+
+const httpLink = createHttpLink({
+  uri: 'https://api.github.com/graphql',
+  credentials: 'same-origin',
+})
+
+const authLink = setContext((_, { headers }) => ({
+  headers: {
+    ...headers,
+    authorization: token ? `Bearer ${token}` : '',
+  },
+}))
+
+const client = new ApolloClient({
+  cache: new InMemoryCache(),
+  connectToDevTools: true,
+  link: authLink.concat(httpLink),
+})
+```

@@ -1,0 +1,72 @@
+---
+title: AI Agent 编码使用指南
+pubDatetime: 2025-05-22T00:00:00+00:00
+tags: ['LLM']
+draft: true
+description: 本文将详细介绍如何有效地使用AI Agent进行代码编写，从基础设置到高级技巧，全面提升您的开发效率。
+---
+
+## 概览
+
+我常用的 AI Coding Agent 只有前两种：
+
+- Cursor: 基于 VSCodium 定制，对比 Copilot 以及其他插件形式的 Agent 具有更高的权限，可以了解整个项目的代码。
+- Cline: 开源，无需会员甚至无需登录，只要有自己的 API Key 就可以使用 Agent，支持很多模型。
+- ~Trae~: 字节推出的 Agent IDE，同样基于 VSCodium，可以理解为 Mars Code Pro 版😂。
+- ~Windsurf~: 之前有个 Tab 补全插件 Codeium（之前我还用过） 所在的公司制作的 Agent IDE，基于 VSCodium。
+- ~[Void](https://github.com/voideditor/void)~: 据说是 Cursor 的开源实现，支持自定义 API Key。
+
+> 提到了 Cline 当然还有 RooCode ，它 fork 自 Cline （由于 Cline 团队有自己的规划，前期很少 Merge PR 所以社区孵化出了 RooCode），它具有 i18n、上下文压缩、多个 Agent 模式等更多特性。
+
+- Cursor 采取的订阅制，每月 20 美刀，500次 fast request，不限次的 slow request；
+- Cline 采用按量付费制，你可以接入各种大模型供应商 Open Router、OAIPro 等。
+
+### Cursor
+
+Cursor 的护城河自然是 tab 补全功能，这是 Cursor 收购了 [Supermaven](https://supermaven.com/) 的大模型，
+它大小才 1B 响应速度很快，模型采用很多优质代码进行训练，结合 Cursor 的定制化能力，确实是业界最好用的代码补全功能。
+除此之外，Cursor 还有多项突出优势：
+
+- **极速补全**：基于1B小模型的tab补全，响应几乎无延迟，准确率高于大多数同类工具
+- **代码库理解**：能自动索引整个项目代码库，提供基于全局上下文的建议和修改
+- **内置Docs**：集成文档系统，可以自定义一些文档 比如公司内部组件库等等，Agent 时会进行参考
+- **Notepad功能**：内置笔记功能，便于记录思路和计划，增强开发流程管理，Agent 时可以读取 Notepad
+- **多模式Agent**：支持对话模式、编辑模式和代码生成模式，满足不同开发场景
+
+### Cline
+
+Cline 具有两个模式 Plan mode 和 Act mode，使用起来心智负担更小。它的优势在于：
+
+- **开源透明**：完全开源，可自定义和扩展功能
+- **模型灵活**：支持多种大模型接入，可根据需求切换
+- **本地化部署**：可在本地运行，保护代码隐私
+- **按量付费**：仅为实际使用的tokens付费，更经济
+- **强大的工具系统**：能读写文件、执行命令、搜索代码等
+
+> 注意！由于 Cline 团队觉得 tab 补全功能影响写代码时的思维连贯性，所以 Cline 暂不支持 tab 补全功能。
+> 所以在使用时可以结合 Copilot，并且 Cline 也支持调用 Copilot API，充个 Copilot Pro 调用次数更多。
+
+**Plan mode vs Act mode**：
+- **Plan mode**：专注于需求分析和方案设计，不执行实际操作。适合复杂问题的思考和规划，帮助分解任务和制定策略。
+- **Act mode**：执行具体操作，如创建文件、修改代码、运行命令等。实际实现Plan mode中设计的方案。
+
+这种双模式设计让开发过程更加结构化：先规划后执行，你可以看到 Cline 是否正确的理解了你的需求、查看 Cline 给出的方案是否正确 然后切换到 Act 进行代码的编写；
+
+两种模式可以设置不同的 root prompt 和不同的 LLM，**由此我总结出两种使用 Cline 的开发范式：**
+
+- **侧重 Plan Mode 的开发方式：**
+  - **Plan mode 负责制定一些规划和技术方案**，可以设置能力较强的、带 thinking 能力的 LLM 比如 Claude 3.7 Thinking、Gemini 2.5 Pro 等；
+  - **Act mode 用来根据 Plan mode 制定的方案生成代码**，可以设置能力适中的、支持 Function Call 的 LLM 比如 Claude 3.5、GPT-4 等（不差钱就全用能力强的模型）。
+- **侧重 Act Mode 的开发方式：**
+  - **Plan mode 用来根据自然语言的用户输入 为 Act mode 生成更加详细、更加标准的 prompt**，将详细的 prompt 交由 Act 来生成代码；所以 plan mode 可以设置能力差一些的模型 比如 DeepSeek-R1，在这个过程中你可以确认 Cline 是否正确理解了你的需求；
+  - **Act mode 用来根据前面的 prompt 生成代码**
+
+这两种不同的开发范式需要你设置不同的 root prompt，Cline 官方更加推荐第 1 种范式。
+
+我是将这两种方式结合起来，先由 Plan 理解我的需求、然后再制定技术方案、拆分任务、最后切换到 Act 进行功能实现。
+
+## 使用方式
+
+Cursor、Cline 都很棒 只不过它们有不同的使用方式，我日常使用较多的是 Cline，故下面的使用指南将 Cline 作为主要使用方式。
+
+

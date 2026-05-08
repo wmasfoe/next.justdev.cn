@@ -1,0 +1,267 @@
+---
+title: 用户体验之 CLS
+pubDatetime: 2023-11-24T00:00:00+00:00
+tags: ['CLS', 'UX', 'CumulativeLayoutShift']
+draft: false
+description: CLS 是用户体验中不可缺失的一部分，是一个以用户为中心、用来衡量可视区域元素稳定性的重要标准，可以帮助我们定量计算出用户遇到意料之外的布局偏移的频率。CLS小可以确保我们的页面有一个良好的用户体验，来看看什么是CLS，以及如何优化CLS。
+---
+
+<a href="#code">点此跳至代码部分</a>
+
+## 背景
+
+在开始之前我们先了解一下 CLS 及其优化的重要性。
+试想一下，我们**聚精会神**在网页看小说时，尤其是已经阅读了一部分文章后，突然出现几条广告将内容挤到了另一个位置，
+不得不费劲寻找原来的阅读位置；还有~~应用场景更广泛的地方~~，当准备点击页面中某个按钮时，手已经准备落下了，
+突然弹出一条广告你来不及反应直接按下，多么糟糕的用户体验。
+
+在业务场景中，这种情况也有可能导致一些重要按钮误删除，不得不增加弹窗进行二次确认。并且布局偏移也可能导致回流重绘，浪费宝贵的浏览器性能。
+
+通常，页面元素发生布局偏移的原因包括异步资源加载、数据的获取以及在 DOM 元素上方动态插入新的元素等。
+具体而言，这些偏移可能源于图片或视频元素尺寸未设置、不受控的第三方广告引入或者组件自身大小的动态调整。
+因此，我们需要一个指标来度量意外偏移对用户**视觉稳定性**产生的影响。
+
+## 什么是 CLS
+
+CLS (Cumulative Layout Shift) 累计布局偏移指标，通过度量**视觉稳定性**反映用户对页面布局偏移所产生的主观视觉体验。
+Google 定义每隔 5 秒作为一个 CLS 监听**时间窗口**，并且要求在每个时间窗口内，相邻两次偏移的时间间隔小于 1 秒。
+在单个时间窗口内，CLS 值是由多个元素的偏移值累加得到的。
+如果页面中的元素布局持续发生偏移（持续时间大于 5 秒），则可能会形成多个时间窗口，每个时间窗口的 CLS 值可能不同。
+在这种情况下，将最大时间窗口的 CLS 值作为该页面的最终 CLS 值。
+
+关于 CLS 的更多概念，请看：[https://web.dev/articles/cls](https://web.dev/articles/cls)
+
+<a id="code"></a>
+
+## 测量 CLS
+
+> CLS 可以在开发阶段来测量，也可以在真实线上测量，开发阶段毕竟不能代替线上环境，
+开发中我们通常只会去加载页面，从而这些工具给页面生成的报告的 CLS 值可能小于线上的 CLS 值。
+
+### Lighthouse
+
+Chrome DevTools 内置了 Lighthouse，可以跑一下 Lighthouse 看看自己的分数。
+
+![img](/static/images/cls/use-lighthouse.png)
+
+勾上 `Performance`，然后点击 `Anayze Page Load` 就可以啦。
+来看看本站分数：
+
+![img](/static/images/cls/cls-demo.png)
+
+好好好，下文优化一手，让 CLS 数值变成 0。
+
+### JS 代码测量
+
+一般测量线上 CLS 指标的最简单方法是使用 `web-vitals` 库，该库将我们需要手动测量CLS的所有复杂点都封装到了一个函数中： 
+
+```js
+import { getCLS } from 'web-vitals'
+getCLS(console.log)
+```
+
+也可以使用浏览器的 `Performance API`:
+
+```ts
+let clsValue = 0;
+let sessionValue = 0;
+let sessionEntries = [];
+function observeHandler(entry: PerformanceObserverEntryList) {
+  for (const entryItem of entry.getEntries()) {
+    if (!entryItem.hadRecentInput) {
+      const firstSessionEntry = sessionEntries[0];
+      const lastSessionEntry = sessionEntries[sessionEntries.length - 1];
+
+      if (
+        sessionValue &&
+        entryItem.startTime - lastSessionEntry.startTime < 1000 &&
+        entryItem.startTime - firstSessionEntry.startTime < 5000
+      ) {
+        sessionValue += entryItem.value;
+        sessionEntries.push(entryItem);
+      } else {
+        sessionValue = entryItem.value;
+        sessionEntries = [entryItem];
+      }
+
+      if (sessionValue > clsValue) {
+        clsValue = sessionValue;
+
+        console.log(
+          `当前 CLS 数值是: ${clsValue} ${
+            clsValue > 0 ? '用户体验不太好哦~' : ''
+          }`
+        );
+      }
+    }
+  }
+}
+
+function getCLS() {
+  const observer = new PerformanceObserver(observeHandler);
+  // 观察 “布局偏移”
+  observer.observe({ type: 'layout-shift', buffered: true });
+}
+
+getCLS();
+```
+
+可以点击这里体验一下 demo ：[https://typescript-vmlwfm.stackblitz.io](https://typescript-vmlwfm.stackblitz.io)
+
+> 最近会将 live editor 迁移到博客中，就不用跳外链了，目前已完成60%，敬请期待。
+
+更多测量工具:
+- [https://www.webpagetest.org](https://www.webpagetest.org)
+- [https://developers.google.com/speed/pagespeed/insights](https://developers.google.com/speed/pagespeed/insights)
+
+## 问题定位及解决
+
+上面通过 Lighthouse 可以查到 CLS 数值，定位导致 CLS 的元素也可以通过 Lighthouse。
+
+![img](/static/images/cls/header-cls.png)
+
+😯，原来是我们的 Header 组件导致的，刷新页面可以看到一开始并没有渲染 `ThemeSwitch` 组件。
+由于整体项目架构采用的是 Next13 / React18，其中 `ThemeSwitch` 用到了客户端 hooks，不能使用服务端组件，
+并且用到了 `window` 来订阅浏览器的明暗状态，也不能使用服务端渲染。
+需要添加 `'use client;'` 前缀和 `{ssr: false}`，导致服务端返回的静态 html 中，并没有这个按钮。然后客户端 JS 执行，组件被渲染，产生 CLS 抖动。
+
+当前这个项目相对来说比较小或者说问题比较明显， CLS 问题比较好分析，可以通过 Lighthouse + 分析代码的方式定位到问题。
+如果一个项目比较大，并且代码不太规范，这种方式可能比较消耗时间和精力。
+
+对于大型项目更加推荐使用 **浏览器插件**，可以直接定位到出现问题的组件。
+
+- [Core Web Vitals](https://chromewebstore.google.com/detail/core-web-vitals/adeniimnihmbpgpbljmnohjpoolmgabj)
+  **推荐使用**，点一下就可以看到当前页面 CLS 数值，并且产生问题的元素高亮显示。
+- [CLS Checker](https://chromewebstore.google.com/detail/cls-checker-journey-furth/ejgjaeamjppjgmjnaaljcocboejdinpj)
+  **推荐使用**，这个插件会记录抖动发生之前页面的状态，你可以直接看到 CLS 抖动之前的页面，看看有哪些不一样的地方。
+- [CLS visualizer](https://chrome.google.com/webstore/detail/jbbeihojggidiclbcneckhcblilapahn)
+  和插件 2 的作用一样，但相对来说不太好用，有一些 bug 会导致页面的宽高溢出，当实在不好定位时，也可以试试它。
+
+现在来动手解决一下，代码里是用 next.js `dynamic` 函数导入的。
+
+```tsx:Header.tsx {3} showLineNumbers
+import dynamic from 'next/dynamic'
+
+const ThemeSwitch = dynamic(() => import('./ThemeSwitch'), { ssr: false })
+
+export const Header = () => {
+  return (<ThemeSwitch />)
+}
+```
+
+但 `dynamic` 并不适合首屏就需要渲染的组件，并且 `ThemeSwitch` 没有太大的性能开销。
+可以改成同步组件的形式。
+
+这样带来另一个问题，代码里用到了 window 对象，来获取浏览器的明暗主题：
+
+```ts:useSystemTheme.ts {2} showLineNumbers
+function useSystemTheme() {
+  const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)')
+
+  function getSnapshot() {
+    return mediaQueryListDark.matches ? 'dark' : 'light'
+  }
+  function subscribe(callback) {
+    mediaQueryListDark.addEventListener('change', callback)
+    return () => {
+      mediaQueryListDark.removeEventListener('change', callback)
+    }
+  }
+  const theme = useSyncExternalStore(subscribe, getSnapshot)
+  return theme
+}
+```
+
+我们可以把这段逻辑放到 `useEffect` 里面，effect 回调只会在客户端执行，组件就可以同步导入啦~
+
+```tsx:ThemeSwitch.tsx {1-13} showLineNumbers
+useEffect(() => {
+  const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)')
+  function handleChange() {
+    const theme = mediaQueryListDark.matches ? 'dark' : 'light'
+    setTheme(theme)
+    setNextTheme(theme)
+  }
+  handleChange()
+  mediaQueryListDark.addEventListener('change', handleChange)
+  return () => {
+    mediaQueryListDark.removeEventListener('change', handleChange)
+  }
+}, [setNextTheme])
+
+const changeTheme = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
+  setTheme(theme === 'dark' ? 'light' : 'dark')
+  setNextTheme(theme === 'dark' ? 'light' : 'dark')
+  event.preventDefault()
+}
+
+return <></>
+```
+
+```tsx:Header.tsx
+import ThemeSwitch from './ThemeSwitch'
+```
+
+然后我们看到 `ThemeSwitch` 代码里有这样一段逻辑：
+
+```tsx:ThemeSwitch.tsx {2, 10-12} showLineNumbers
+// When mounted on client, now we can show the UI
+useEffect(() => setMounted(true), [])
+
+const changeTheme = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
+  setTheme(theme === 'dark' ? 'light' : 'dark')
+  setNextTheme(theme === 'dark' ? 'light' : 'dark')
+  event.preventDefault()
+}
+
+if (!mounted) {
+  return null
+}
+
+return (<></>)
+```
+
+在组件实际 mount 之前，需要设置一个同等大小的 `div` 来占位，当然你也可以用 React 提供的 `lazy` 和 `Suspense`：
+
+```tsx:ThemeSwitch.tsx {22} showLineNumbers
+function App() {
+  // 这里还有一些逻辑
+  return (
+    <div
+      className="color-scheme-switch-wrapper"
+      aria-label="Toggle Dark Mode"
+      onClick={changeTheme}
+    >
+      {mounted ? (
+        <>
+          <input
+            type="checkbox"
+            name="color-scheme-switch"
+            id="color-scheme-switch"
+            checked={theme === 'dark' || nextTheme === 'dark'}
+            className="color-scheme-switch"
+            onChange={() => {}}
+          />
+          <label htmlFor="color-scheme-switch" />
+        </>
+      ) : (
+        <div style={{ width: '40px' }}></div>
+      )}
+    </div>
+  )
+}
+```
+
+现在刷新页面，`Header` 就不会闪动了，在 `ThemeSwitch` 的位置会先渲染一个占位 `div`。
+看看优化后的数值：
+
+![img](/static/images/cls/opt-cls-value.png)
+
+你也可以在这里手动跑一下 Lighthouse。
+
+## 更多资料
+
+- [https://support.google.com/webmasters/answer/9205520](https://support.google.com/webmasters/answer/9205520)
+- [https://dev.to/fritzlolpro/enhancing-visual-stability-understanding-cumulative-layout-shift-cls-53mj](https://dev.to/fritzlolpro/enhancing-visual-stability-understanding-cumulative-layout-shift-cls-53mj)
+
+今儿先到这~
