@@ -46,7 +46,7 @@ export const SITE: Site = {
   editPost: {
     enabled: true,
     text: "Edit on GitHub",
-    url: "https://github.com/wmasfoe/steipete.me/edit/main/",
+    url: "https://github.com/wmasfoe/next.justdev.cn/edit/main/",
   },
   dynamicOgImage: true,
   lang: "zh-CN",
