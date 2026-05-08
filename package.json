@@ -70,9 +70,16 @@
     "vite": "^6.3.5"
   },
   "lint-staged": {
-    "*.{js,ts,tsx,json}": [
+    "src/**/*.{js,ts,tsx,json}": [
       "oxfmt --write",
       "oxlint --fix"
+    ],
+    "astro.config.mjs": [
+      "oxfmt --write",
+      "oxlint --fix"
+    ],
+    "*.{json,mjs,cjs}": [
+      "oxfmt --write"
     ]
   },
   "config": {
