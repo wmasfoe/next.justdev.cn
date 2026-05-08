@@ -59,11 +59,7 @@ export default defineConfig({
           item.lastmod = new Date().toISOString();
         }
         // Main section pages
-        else if (
-          url.endsWith("/posts") ||
-          url.endsWith("/about") ||
-          url.endsWith("/search")
-        ) {
+        else if (url.endsWith("/posts") || url.endsWith("/about") || url.endsWith("/search")) {
           item.priority = 0.9;
           item.changefreq = ChangeFreqEnum.WEEKLY;
         }
@@ -140,9 +136,7 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: "/404",
-        globPatterns: [
-          "**/*.{css,js,html,svg,png,jpg,jpeg,gif,webp,woff,woff2,ttf,eot,ico}",
-        ],
+        globPatterns: ["**/*.{css,js,html,svg,png,jpg,jpeg,gif,webp,woff,woff2,ttf,eot,ico}"],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
