@@ -1,4 +1,5 @@
 ---
+import { Image } from "astro:assets";
 import type { CollectionEntry } from "astro:content";
 import { SITE } from "@/config";
 import Footer from "../components/Footer.astro";
@@ -10,9 +11,10 @@ import Layout from "./Layout.astro";
 type Props = CollectionEntry<"blog">["data"] & {
   slug: string;
   readingTime?: string;
+  editPath?: string;
 };
 
-const { title, description, pubDatetime, modDatetime, heroImage, slug, readingTime } = Astro.props;
+const { title, description, pubDatetime, modDatetime, heroImage, slug, readingTime, editPath } = Astro.props;
 
 // Enforce canonical URL to always be /posts/ path without trailing slash
 // This matches Vercel's trailingSlash: false configuration
@@ -119,9 +121,9 @@ const canonicalURL = new URL(canonicalPath, Astro.site).toString();
         </span>
       </div>
       {
-        SITE.editPost.enabled && (
+        SITE.editPost.enabled && editPath && (
           <a
-            href={`${SITE.editPost.url}src/content/blog/${slug}.md`}
+            href={`${SITE.editPost.url}${editPath}`}
             target="_blank"
             rel="noopener noreferrer"
             class="text-sm text-foreground/60 hover:text-accent inline-flex items-center gap-1"
@@ -148,12 +150,23 @@ const canonicalURL = new URL(canonicalPath, Astro.site).toString();
     <article id="article" class="mx-auto prose mt-8 max-w-3xl">
       {
         heroImage && (
-          <img
-            src={heroImage}
-            alt=""
-            class="mb-8 aspect-video w-full rounded-md object-cover"
-            loading="lazy"
-          />
+          typeof heroImage === "string" ? (
+            <img
+              src={heroImage}
+              alt=""
+              class="mb-8 aspect-video w-full rounded-md object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <Image
+              src={heroImage}
+              alt=""
+              class="mb-8 aspect-video w-full rounded-md object-cover"
+              loading="lazy"
+              widths={[400, 800, 1200]}
+              sizes="(max-width: 768px) 100vw, 768px"
+            />
+          )
         )
       }
 

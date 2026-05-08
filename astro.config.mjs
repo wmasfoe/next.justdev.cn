@@ -13,7 +13,7 @@ import AstroPWA from "@vite-pwa/astro";
 // https://astro.build/config
 export default defineConfig({
   site: SITE.website,
-  trailingSlash: "never",
+  trailingSlash: "ignore",
   markdown: {
     remarkPlugins: [
       remarkToc,
@@ -59,7 +59,11 @@ export default defineConfig({
           item.lastmod = new Date().toISOString();
         }
         // Main section pages
-        else if (url.endsWith("/posts") || url.endsWith("/about") || url.endsWith("/search")) {
+        else if (
+          url.endsWith("/posts") ||
+          url.endsWith("/about") ||
+          url.endsWith("/search")
+        ) {
           item.priority = 0.9;
           item.changefreq = ChangeFreqEnum.WEEKLY;
         }
@@ -103,12 +107,11 @@ export default defineConfig({
     react(),
     AstroPWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "peter-avatar.jpg"],
+      includeAssets: ["favicon.ico", "avatar.jpg"],
       manifest: {
-        name: "Peter Steinberger",
-        short_name: "steipete",
-        description:
-          "AI-powered tools from Swift roots to web frontiers. Everything I build is open source.",
+        name: "jacky",
+        short_name: "jacky",
+        description: "hello",
         theme_color: "#006cac",
         background_color: "#fdfdfd",
         display: "standalone",
@@ -122,13 +125,13 @@ export default defineConfig({
             type: "image/x-icon",
           },
           {
-            src: "peter-avatar.jpg",
+            src: "avatar.jpg",
             sizes: "192x192",
             type: "image/jpeg",
             purpose: "any",
           },
           {
-            src: "peter-avatar.jpg",
+            src: "avatar.jpg",
             sizes: "512x512",
             type: "image/jpeg",
             purpose: "any maskable",
@@ -137,7 +140,9 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: "/404",
-        globPatterns: ["**/*.{css,js,html,svg,png,jpg,jpeg,gif,webp,woff,woff2,ttf,eot,ico}"],
+        globPatterns: [
+          "**/*.{css,js,html,svg,png,jpg,jpeg,gif,webp,woff,woff2,ttf,eot,ico}",
+        ],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

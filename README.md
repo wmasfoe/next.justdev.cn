@@ -1,10 +1,8 @@
-# Peter Steinberger's Personal Website
+# blog.justdev.cn
 
-This is the source code for my personal website, built with [Astro](https://astro.build) and deployed on [Vercel](https://vercel.com).
+Personal website and blog, built with [Astro](https://astro.build) and deployed on [Vercel](https://vercel.com).
 
-## About
-
-I'm Peter Steinberger, an iOS developer, entrepreneur, and open source contributor. This website hosts my personal blog and information about my work.
+Forked from [steipete/steipete.me](https://github.com/steipete/steipete.me) (AstroPaper theme, originally by [Sat Naing](https://github.com/satnaing)).
 
 ## Project Structure
 
@@ -25,32 +23,30 @@ I'm Peter Steinberger, an iOS developer, entrepreneur, and open source contribut
 ├── astro.config.mjs     # Astro configuration
 ├── vercel.json          # Vercel deployment and CSP configuration
 ├── package.json         # Project dependencies and scripts
-├── tailwind.config.mjs  # Tailwind CSS configuration
 └── LICENSE              # Dual license (CC BY 4.0 + MIT)
 ```
 
 ## Commands
 
-| Command                | Action                                      |
-| :--------------------- | :------------------------------------------ |
-| `pnpm install`         | Installs dependencies                       |
-| `pnpm run dev`         | Starts local dev server at `localhost:4321` |
-| `pnpm run build`       | Build the production site to `./dist/`      |
-| `pnpm run preview`     | Preview the build locally, before deploying |
+| Command            | Action                                      |
+| :----------------- | :------------------------------------------ |
+| `pnpm install`     | Installs dependencies                       |
+| `pnpm run dev`     | Starts local dev server at `localhost:4321` |
+| `pnpm run build`   | Build the production site to `./dist/`      |
+| `pnpm run preview` | Preview the build locally, before deploying |
 
 ## Deployment
 
-This site is set up for easy deployment on Vercel. Just connect your GitHub repository to Vercel, and it will automatically build and deploy the site when changes are pushed.
+Deployed on Vercel. Connect this repo in the Vercel dashboard and bind the `blog.justdev.cn` domain.
 
 ## License
 
-This repository uses dual licensing:
-
-- **Documentation & Blog Posts**: Licensed under [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
-- **Code & Code Snippets**: Licensed under the [MIT License](LICENSE)
+- **Documentation & Blog Posts** (upstream author's content): [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
+- **Code & Code Snippets**: [MIT License](LICENSE)
 
 See the [LICENSE](LICENSE) file for full details.
 
-## Special Thanks
+## Acknowledgements
 
-Special thanks to [Sat Naing](https://github.com/satnaing) for creating the excellent [AstroPaper theme](https://astro-paper.pages.dev/) that served as the foundation for this website. Their thoughtful design and clean architecture made it a joy to build upon.
+- [Peter Steinberger](https://github.com/steipete) — upstream repository
+- [Sat Naing](https://github.com/satnaing) — original AstroPaper theme

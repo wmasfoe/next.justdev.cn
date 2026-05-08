@@ -31,12 +31,12 @@ interface Site {
 
 // Site configuration
 export const SITE: Site = {
-  website: "https://steipete.me/",
-  author: "Peter Steinberger",
-  profile: "https://steipete.me/about",
-  desc: "AI-powered tools from Swift roots to web frontiers. Every commit lands on GitHub for you to fork & remix.",
-  title: "Peter Steinberger",
-  ogImage: "peter-avatar.jpg",
+  website: "https://blog.justdev.cn/",
+  author: "jacky",
+  profile: "https://blog.justdev.cn/about",
+  desc: "hello",
+  title: "jacky",
+  ogImage: "avatar.jpg",
   lightAndDarkMode: true,
   postPerIndex: 10,
   postPerPage: 10,
@@ -46,7 +46,7 @@ export const SITE: Site = {
   editPost: {
     enabled: true,
     text: "Edit on GitHub",
-    url: "https://github.com/steipete/steipete.me/edit/main/",
+    url: "https://github.com/wmasfoe/steipete.me/edit/main/",
   },
   dynamicOgImage: true,
   lang: "en",
@@ -71,15 +71,15 @@ export const NAV_LINKS: SocialLink[] = [
 // Social media links
 export const SOCIAL_LINKS: SocialLink[] = [
   {
-    href: "https://github.com/steipete",
+    href: "https://github.com/wmasfoe",
     label: "GitHub",
   },
   {
-    href: "https://twitter.com/steipete",
+    href: "#",
     label: "Twitter",
   },
   {
-    href: "https://bsky.app/profile/steipete.me",
+    href: "#",
     label: "BlueSky",
   },
   {

@@ -26,7 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [2025-01-06]
 
 ### Changed
-- Updated email address from steipete@gmail.com to peter@steipete.me site-wide (#120)
+- Updated email address from steipete@gmail.com to hello@justdev.cn site-wide (#120)
 
 ### Added
 - Smooth transitions for theme switching with CSS transitions (#119)
