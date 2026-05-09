@@ -310,6 +310,8 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
     const codeBlocks = Array.from(document.querySelectorAll("pre"));
 
     for (const codeBlock of codeBlocks) {
+      if (codeBlock.closest("[data-playground-root]")) continue;
+
       const wrapper = document.createElement("div");
       wrapper.style.position = "relative";
 

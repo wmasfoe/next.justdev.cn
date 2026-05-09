@@ -6,6 +6,7 @@ import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
 import remarkToc from "remark-toc";
 import remarkCollapse from "remark-collapse";
+import { remarkCodePlayground } from "./src/utils/remarkCodePlayground.mjs";
 import { remarkLazyLoadImages } from "./src/utils/remarkLazyLoadImages.mjs";
 import { SITE } from "./src/config";
 import AstroPWA from "@vite-pwa/astro";
@@ -19,6 +20,7 @@ export default defineConfig({
       remarkToc,
       // @ts-ignore - TypeScript has issues with remark plugin tuple syntax
       [remarkCollapse, { test: "Table of contents" }],
+      remarkCodePlayground,
       remarkLazyLoadImages,
     ],
     shikiConfig: {

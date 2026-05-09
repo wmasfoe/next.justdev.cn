@@ -1,0 +1,202 @@
+.code-playground {
+  margin: 1.75rem 0;
+  color: var(--foreground);
+}
+
+.prose .code-playground {
+  max-width: none;
+}
+
+.code-playground-shell {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, var(--foreground));
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--muted) 70%, transparent), transparent 45%),
+    var(--background);
+  box-shadow: 0 16px 45px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+
+.code-playground-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0.625rem 0.75rem;
+  background: color-mix(in srgb, var(--muted) 62%, var(--background));
+}
+
+.code-playground-title {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.code-playground-title span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-playground-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.code-playground-switcher {
+  display: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  padding: 2px;
+}
+
+.code-playground-switcher button,
+.code-playground-action,
+.code-playground-actions .sp-button {
+  min-height: 1.875rem;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 0.25rem 0.625rem;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.code-playground-switcher button.is-active,
+.code-playground-action,
+.code-playground-actions .sp-button {
+  border-color: var(--border);
+  background: var(--background);
+}
+
+.code-playground-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+
+.code-playground-actions .sp-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  text-decoration: none;
+}
+
+.code-playground-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.88fr);
+  min-height: 24rem;
+}
+
+.code-playground-shell--preview .code-playground-body {
+  display: block;
+  min-height: 18rem;
+}
+
+.code-playground-editor,
+.code-playground-preview {
+  min-width: 0;
+  min-height: 24rem;
+}
+
+.code-playground-shell--preview .code-playground-preview {
+  min-height: 18rem;
+}
+
+.code-playground-editor {
+  border-right: 1px solid var(--border);
+}
+
+.code-playground-preview {
+  background: #fff;
+}
+
+.code-playground .sp-wrapper,
+.code-playground .sp-layout,
+.code-playground .sp-stack,
+.code-playground .sp-preview,
+.code-playground .sp-editor {
+  height: 100%;
+  min-height: inherit;
+  border: 0;
+  border-radius: 0;
+}
+
+.code-playground .sp-preview-container,
+.code-playground .sp-preview-iframe {
+  min-height: inherit;
+}
+
+.code-playground .sp-tabs {
+  border-bottom-color: var(--border);
+}
+
+.code-playground .sp-tab-button {
+  font-family: inherit;
+  font-size: 0.75rem;
+}
+
+.code-playground .sp-cm {
+  min-height: inherit;
+}
+
+.prose .code-playground pre,
+.prose .code-playground code {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .code-playground-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .code-playground-switcher {
+    display: inline-flex;
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .code-playground-switcher button {
+    flex: 1 1 0;
+  }
+
+  .code-playground-body {
+    display: block;
+    min-height: 22rem;
+  }
+
+  .code-playground-editor,
+  .code-playground-preview {
+    display: none;
+    min-height: 22rem;
+  }
+
+  .code-playground-editor.is-active,
+  .code-playground-preview.is-active,
+  .code-playground-shell--preview .code-playground-preview {
+    display: block;
+  }
+
+  .code-playground-editor {
+    border-right: 0;
+  }
+}

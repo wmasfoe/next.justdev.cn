@@ -1,0 +1,40 @@
+---
+import CodePlaygroundClient from "./CodePlaygroundClient";
+import "@/styles/code-playground.css";
+
+type PlaygroundMode = "playground" | "preview";
+type PlaygroundTemplate = "vanilla-ts" | "react" | "react-ts" | "static";
+
+interface Props {
+  mode?: PlaygroundMode;
+  template?: PlaygroundTemplate;
+  files: string;
+  visibleFiles?: string;
+  activeFile?: string;
+  title?: string;
+}
+
+const {
+  mode = "playground",
+  template = "vanilla-ts",
+  files,
+  visibleFiles,
+  activeFile,
+  title,
+} = Astro.props;
+
+const parsedFiles = JSON.parse(files);
+const parsedVisibleFiles = visibleFiles ? JSON.parse(visibleFiles) : undefined;
+---
+
+<div class="code-playground" data-playground-root>
+  <CodePlaygroundClient
+    client:visible
+    mode={mode}
+    template={template}
+    files={parsedFiles}
+    visibleFiles={parsedVisibleFiles}
+    activeFile={activeFile}
+    title={title}
+  />
+</div>
