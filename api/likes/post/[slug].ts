@@ -2,33 +2,31 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Redis } from "@upstash/redis";
 
 const redis = Redis.fromEnv();
-const SLUG_RE = /^[a-zA-Z0-9_/-]{1,160}$/;
+// Single-segment slug. Slashes in canonical post slugs are transported as "~"
+// to avoid Vercel's catch-all routing issues in the bare /api/ directory.
+const SLUG_RE = /^[a-zA-Z0-9_~-]{1,160}$/;
 const KEY = (slug: string) => `likes:${slug}`;
 
-function extractSlug(req: VercelRequest): string {
-  // Prefer Vercel's parsed query param (works on Next-style routes).
+function extractEncodedSlug(req: VercelRequest): string {
   const raw = req.query.slug;
-  if (Array.isArray(raw)) return raw.join("/");
-  if (typeof raw === "string" && raw.length > 0) return raw;
-  // Fallback: parse from req.url. Generic /api/ directory on non-Next
-  // projects may not populate req.query for catch-all segments.
-  const url = req.url ?? "";
-  const path = url.split("?")[0] ?? "";
-  const m = path.match(/^\/api\/likes\/(.+)$/);
-  if (!m) return "";
-  return decodeURIComponent(m[1]);
+  if (typeof raw === "string") return raw;
+  if (Array.isArray(raw)) return raw[0] ?? "";
+  // Fallback: parse from URL when query.slug is missing.
+  const path = (req.url ?? "").split("?")[0] ?? "";
+  const m = path.match(/^\/api\/likes\/post\/([^/]+)\/?$/);
+  return m ? decodeURIComponent(m[1]) : "";
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const slug = extractSlug(req);
-  if (!SLUG_RE.test(slug) || slug.includes("..")) {
-    return res.status(400).json({ error: "bad slug", received: slug, url: req.url });
+  const encoded = extractEncodedSlug(req);
+  if (!SLUG_RE.test(encoded) || encoded.includes("..")) {
+    return res.status(400).json({ error: "bad slug", received: encoded, url: req.url });
   }
+  // Decode "~" → "/" to recover the canonical post slug used as the storage key.
+  const slug = encoded.replace(/~/g, "/");
 
   if (req.method === "GET") {
     const count = (await redis.get<number>(KEY(slug))) ?? 0;
-    // Disable any CDN/proxy caching — count changes on every POST and we
-    // have no way to invalidate the edge cache from within the function.
     res.setHeader("Cache-Control", "no-store, max-age=0");
     return res.status(200).json({ count });
   }

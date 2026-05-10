@@ -6,7 +6,10 @@ const DEBOUNCE_MS = 1000;
 type Props = { slug: string };
 
 const storageKey = (slug: string) => `likes:${slug}`;
-const encodeSlug = (s: string) => s.split("/").map(encodeURIComponent).join("/");
+// Encode "/" as "~" so the slug is always a single URL segment, then
+// percent-encode each segment for any other reserved chars.
+const encodeSlug = (s: string) => s.split("/").map(encodeURIComponent).join("~");
+const apiUrl = (slug: string) => `/api/likes/post/${encodeSlug(slug)}`;
 
 export default function LikeButton({ slug }: Props) {
   const [serverTotal, setServerTotal] = useState(0);
@@ -21,7 +24,7 @@ export default function LikeButton({ slug }: Props) {
       setLocalCount(Math.min(MAX_LIKES, stored));
     }
     let cancelled = false;
-    fetch(`/api/likes/${encodeSlug(slug)}`)
+    fetch(apiUrl(slug))
       .then((r) => (r.ok ? r.json() : { count: 0 }))
       .then((d: { count?: number }) => {
         if (!cancelled && typeof d.count === "number") {
@@ -44,7 +47,7 @@ export default function LikeButton({ slug }: Props) {
     pendingRef.current = 0;
     inFlightRef.current = true;
     try {
-      const res = await fetch(`/api/likes/${encodeSlug(slug)}`, {
+      const res = await fetch(apiUrl(slug), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ delta }),
@@ -81,7 +84,7 @@ export default function LikeButton({ slug }: Props) {
       const blob = new Blob([JSON.stringify({ delta })], {
         type: "application/json",
       });
-      navigator.sendBeacon(`/api/likes/${encodeSlug(slug)}`, blob);
+      navigator.sendBeacon(apiUrl(slug), blob);
     };
     const onVis = () => {
       if (document.visibilityState === "hidden") beacon();
