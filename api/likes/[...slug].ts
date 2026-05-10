@@ -32,10 +32,9 @@ export default async function handler(
 
   if (req.method === "GET") {
     const count = (await redis.get<number>(KEY(slug))) ?? 0;
-    res.setHeader(
-      "Cache-Control",
-      "public, s-maxage=30, stale-while-revalidate=300",
-    );
+    // Disable any CDN/proxy caching — count changes on every POST and we
+    // have no way to invalidate the edge cache from within the function.
+    res.setHeader("Cache-Control", "no-store, max-age=0");
     return res.status(200).json({ count });
   }
 
