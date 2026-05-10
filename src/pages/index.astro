@@ -1,5 +1,7 @@
 ---
+import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
+import avatarSrc from "@/assets/avatar.jpg";
 import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
 import IconRss from "@/assets/icons/IconRss.svg";
 import Card from "@/components/Card.astro";
@@ -30,9 +32,16 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
     <section id="hero" class="pt-6 pb-4">
       <div class="flex flex-col sm:flex-row items-start gap-4">
         <a href="/about" class="block mx-auto sm:mx-0 group">
-          <img
-            src="/avatar.jpg"
+          <Image
+            src={avatarSrc}
             alt="Jacky Li"
+            width={320}
+            height={320}
+            densities={[1, 2]}
+            format="webp"
+            quality={80}
+            loading="eager"
+            fetchpriority="high"
             class="w-40 h-40 rounded-full object-cover flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl"
           />
         </a>
