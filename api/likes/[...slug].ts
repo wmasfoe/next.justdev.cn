@@ -19,15 +19,10 @@ function extractSlug(req: VercelRequest): string {
   return decodeURIComponent(m[1]);
 }
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   const slug = extractSlug(req);
   if (!SLUG_RE.test(slug) || slug.includes("..")) {
-    return res
-      .status(400)
-      .json({ error: "bad slug", received: slug, url: req.url });
+    return res.status(400).json({ error: "bad slug", received: slug, url: req.url });
   }
 
   if (req.method === "GET") {
