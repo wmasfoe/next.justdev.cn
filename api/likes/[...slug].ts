@@ -5,14 +5,29 @@ const redis = Redis.fromEnv();
 const SLUG_RE = /^[a-zA-Z0-9_/-]{1,160}$/;
 const KEY = (slug: string) => `likes:${slug}`;
 
+function extractSlug(req: VercelRequest): string {
+  // Prefer Vercel's parsed query param (works on Next-style routes).
+  const raw = req.query.slug;
+  if (Array.isArray(raw)) return raw.join("/");
+  if (typeof raw === "string" && raw.length > 0) return raw;
+  // Fallback: parse from req.url. Generic /api/ directory on non-Next
+  // projects may not populate req.query for catch-all segments.
+  const url = req.url ?? "";
+  const path = url.split("?")[0] ?? "";
+  const m = path.match(/^\/api\/likes\/(.+)$/);
+  if (!m) return "";
+  return decodeURIComponent(m[1]);
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse,
 ) {
-  const raw = req.query.slug;
-  const slug = Array.isArray(raw) ? raw.join("/") : String(raw ?? "");
+  const slug = extractSlug(req);
   if (!SLUG_RE.test(slug) || slug.includes("..")) {
-    return res.status(400).json({ error: "bad slug" });
+    return res
+      .status(400)
+      .json({ error: "bad slug", received: slug, url: req.url });
   }
 
   if (req.method === "GET") {
