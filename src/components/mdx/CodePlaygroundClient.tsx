@@ -1,9 +1,11 @@
 import {
-  OpenInCodeSandboxButton,
   SandpackCodeEditor,
+  SandpackConsole,
   SandpackPreview,
   SandpackProvider,
+  UnstyledOpenInCodeSandboxButton,
   useSandpack,
+  useSandpackNavigation,
   type SandpackFiles,
   type SandpackPredefinedTemplate,
 } from "@codesandbox/sandpack-react";
@@ -12,31 +14,40 @@ import { useState } from "react";
 type PlaygroundMode = "playground" | "preview";
 type PlaygroundTemplate = Extract<
   SandpackPredefinedTemplate,
-  "vanilla-ts" | "react" | "react-ts" | "static"
+  "vanilla" | "vanilla-ts" | "react" | "react-ts" | "static"
 >;
+type PlaygroundLayout = "row" | "col";
+type PreviewPanel = "result" | "console";
 
 interface CodePlaygroundClientProps {
   mode: PlaygroundMode;
   template: PlaygroundTemplate;
+  layout?: PlaygroundLayout;
   files: SandpackFiles;
   visibleFiles?: string[];
   activeFile?: string;
   title?: string;
+  hideResult?: boolean;
 }
 
 export default function CodePlaygroundClient({
   mode,
   template,
+  layout = "row",
   files,
   visibleFiles,
   activeFile,
   title,
+  hideResult = false,
 }: CodePlaygroundClientProps) {
   const [mobilePanel, setMobilePanel] = useState<"code" | "preview">("code");
+  const [previewPanel, setPreviewPanel] = useState<PreviewPanel>(hideResult ? "console" : "result");
   const resolvedFiles = withTemplateDefaults(template, files);
   const resolvedVisibleFiles = visibleFiles ?? Object.keys(resolvedFiles);
   const resolvedActiveFile = activeFile ?? resolvedVisibleFiles[0];
   const isPreviewOnly = mode === "preview";
+  const showTabs = resolvedVisibleFiles.length > 1;
+  const activePreview: PreviewPanel = hideResult ? "console" : previewPanel;
 
   return (
     <SandpackProvider
@@ -49,7 +60,10 @@ export default function CodePlaygroundClient({
         recompileDelay: 250,
       }}
     >
-      <section className={`code-playground-shell code-playground-shell--${mode}`}>
+      <section
+        className={`code-playground-shell code-playground-shell--${mode} code-playground-shell--${layout}`}
+        data-layout={layout}
+      >
         <PlaygroundHeader
           mode={mode}
           title={title}
@@ -59,7 +73,12 @@ export default function CodePlaygroundClient({
         <div className="code-playground-body">
           {!isPreviewOnly && (
             <div className={`code-playground-editor ${mobilePanel === "code" ? "is-active" : ""}`}>
-              <SandpackCodeEditor showTabs showLineNumbers showInlineErrors wrapContent />
+              <SandpackCodeEditor
+                showTabs={showTabs}
+                showLineNumbers
+                showInlineErrors
+                wrapContent
+              />
             </div>
           )}
           <div
@@ -67,13 +86,33 @@ export default function CodePlaygroundClient({
               isPreviewOnly || mobilePanel === "preview" ? "is-active" : ""
             }`}
           >
-            <SandpackPreview
-              showNavigator={false}
-              showOpenInCodeSandbox={false}
-              showRefreshButton={false}
-              showRestartButton={false}
-              showSandpackErrorOverlay
+            <PreviewTabs
+              hideResult={hideResult}
+              activePreview={activePreview}
+              onChange={setPreviewPanel}
             />
+            <div className="code-playground-preview-panes">
+              {!hideResult && (
+                <div
+                  className="code-playground-preview-pane code-playground-preview-pane--result"
+                  data-active={activePreview === "result"}
+                >
+                  <SandpackPreview
+                    showNavigator={false}
+                    showOpenInCodeSandbox={false}
+                    showRefreshButton={false}
+                    showRestartButton={false}
+                    showSandpackErrorOverlay
+                  />
+                </div>
+              )}
+              <div
+                className="code-playground-preview-pane code-playground-preview-pane--console"
+                data-active={activePreview === "console"}
+              >
+                <SandpackConsole showHeader={false} resetOnPreviewRestart />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -82,22 +121,27 @@ export default function CodePlaygroundClient({
 }
 
 function withTemplateDefaults(template: PlaygroundTemplate, files: SandpackFiles): SandpackFiles {
-  if (template !== "vanilla-ts" || files["/index.html"]) {
+  if (template !== "vanilla-ts" && template !== "vanilla") {
     return files;
   }
+  if (files["/index.html"]) {
+    return files;
+  }
+
+  const entry = template === "vanilla-ts" ? "/index.ts" : "/index.js";
 
   return {
     ...files,
     "/index.html": `<!DOCTYPE html>
 <html>
   <head>
-    <title>Vanilla TypeScript Playground</title>
+    <title>${template === "vanilla-ts" ? "Vanilla TypeScript" : "Vanilla JavaScript"} Playground</title>
     <meta charset="UTF-8" />
   </head>
   <body>
     <div id="root"></div>
     <div id="app"></div>
-    <script src="/index.ts"></script>
+    <script src="${entry}"></script>
   </body>
 </html>`,
   };
@@ -143,14 +187,135 @@ function PlaygroundHeader({
       )}
       <div className="code-playground-actions">
         <button
-          className="code-playground-action"
           type="button"
+          className="code-playground-icon-button"
+          aria-label="Reset playground"
+          title="Reset"
           onClick={() => sandpack.resetAllFiles()}
         >
-          Reset
+          <IconRefresh />
+          <span className="sr-only">Reset</span>
         </button>
-        <OpenInCodeSandboxButton />
+        <UnstyledOpenInCodeSandboxButton
+          className="code-playground-icon-button"
+          aria-label="Open in CodeSandbox"
+          title="Open in CodeSandbox"
+        >
+          <IconExternalLink />
+          <span className="sr-only">Open in CodeSandbox</span>
+        </UnstyledOpenInCodeSandboxButton>
       </div>
     </header>
+  );
+}
+
+function PreviewTabs({
+  hideResult,
+  activePreview,
+  onChange,
+}: {
+  hideResult: boolean;
+  activePreview: PreviewPanel;
+  onChange: (panel: PreviewPanel) => void;
+}) {
+  const { refresh } = useSandpackNavigation();
+
+  return (
+    <div className="code-playground-preview-tabs">
+      {!hideResult && (
+        <div className="code-playground-preview-tablist" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activePreview === "result"}
+            className={`code-playground-preview-tab ${
+              activePreview === "result" ? "is-active" : ""
+            }`}
+            onClick={() => onChange("result")}
+          >
+            Result
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activePreview === "console"}
+            className={`code-playground-preview-tab ${
+              activePreview === "console" ? "is-active" : ""
+            }`}
+            onClick={() => onChange("console")}
+          >
+            Console
+          </button>
+        </div>
+      )}
+      <button
+        type="button"
+        className="code-playground-icon-button code-playground-icon-button--sm"
+        aria-label="Refresh preview"
+        title="Refresh preview"
+        onClick={() => refresh()}
+      >
+        <IconRotateClockwise />
+        <span className="sr-only">Refresh preview</span>
+      </button>
+    </div>
+  );
+}
+
+function IconRefresh() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4" />
+      <path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4" />
+    </svg>
+  );
+}
+
+function IconRotateClockwise() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M19.95 11A8 8 0 1 0 12 20" />
+      <path d="M20 4v5h-5" />
+    </svg>
+  );
+}
+
+function IconExternalLink() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+      <path d="M11 13l9-9" />
+      <path d="M15 4h5v5" />
+    </svg>
   );
 }

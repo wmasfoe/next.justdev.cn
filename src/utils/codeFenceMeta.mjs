@@ -1,6 +1,8 @@
-const SUPPORTED_TEMPLATES = new Set(["vanilla-ts", "react", "react-ts", "static"]);
+const SUPPORTED_TEMPLATES = new Set(["vanilla", "vanilla-ts", "react", "react-ts", "static"]);
+const SUPPORTED_LAYOUTS = new Set(["row", "col"]);
 
 export const DEFAULT_PLAYGROUND_TEMPLATE = "vanilla-ts";
+export const DEFAULT_PLAYGROUND_LAYOUT = "row";
 
 export function parseCodeFenceMeta(lang, meta = "") {
   const tokens = tokenizeMeta(meta);
@@ -39,6 +41,23 @@ export function parseCodeFenceMeta(lang, meta = "") {
     );
   }
 
+  if (flags.has("row") && flags.has("col")) {
+    throw new Error("Code fence cannot use both `row` and `col` layout flags.");
+  }
+
+  const layoutFlag = flags.has("col") ? "col" : flags.has("row") ? "row" : null;
+  const layoutAttr = attrs.get("layout");
+  if (layoutAttr && !SUPPORTED_LAYOUTS.has(layoutAttr)) {
+    throw new Error(
+      `Unsupported playground layout \`${layoutAttr}\`. Supported layouts: ${Array.from(
+        SUPPORTED_LAYOUTS,
+      ).join(", ")}.`,
+    );
+  }
+  const layout = layoutFlag ?? layoutAttr ?? DEFAULT_PLAYGROUND_LAYOUT;
+
+  const hideResult = flags.has("hideResult") || flags.has("hide-result");
+
   return {
     interactive: true,
     mode: hasPreview ? "preview" : "playground",
@@ -46,6 +65,10 @@ export function parseCodeFenceMeta(lang, meta = "") {
     playgroup: attrs.get("playgroup"),
     template,
     hasTemplate: attrs.has("template"),
+    layout,
+    hasLayout: layoutFlag !== null || attrs.has("layout"),
+    hideResult,
+    hasHideResult: hideResult,
     lang,
   };
 }
@@ -60,6 +83,12 @@ export function inferPlaygroundFile({ file, lang, mode, template }) {
     if (lang === "css") return "/styles.css";
     if (lang === "js" || lang === "javascript") return "/index.js";
     return "/index.html";
+  }
+
+  if (template === "vanilla") {
+    if (lang === "html") return "/index.html";
+    if (lang === "css") return "/styles.css";
+    return "/index.js";
   }
 
   if (lang === "html") return "/index.html";

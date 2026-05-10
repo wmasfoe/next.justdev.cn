@@ -71,7 +71,7 @@ function parseInteractiveCodeNode(node) {
 
 function createPlaygroundNode(group) {
   const first = group[0];
-  const { mode, template } = first.meta;
+  const { mode, template, layout, hideResult } = first.meta;
 
   if (group.length > 1) {
     for (const item of group) {
@@ -87,6 +87,16 @@ function createPlaygroundNode(group) {
     if (item.meta.hasTemplate) {
       throw new Error(
         `Only the first code fence in playgroup \`${first.meta.playgroup}\` may set template=...`,
+      );
+    }
+    if (item.meta.hasLayout) {
+      throw new Error(
+        `Only the first code fence in playgroup \`${first.meta.playgroup}\` may set the layout (row/col).`,
+      );
+    }
+    if (item.meta.hasHideResult) {
+      throw new Error(
+        `Only the first code fence in playgroup \`${first.meta.playgroup}\` may set the hideResult flag.`,
       );
     }
   }
@@ -113,17 +123,24 @@ function createPlaygroundNode(group) {
   const activeFile = visibleFiles[0];
   const title = first.meta.playgroup ?? (mode === "preview" ? "Preview" : "Playground");
 
+  const attributes = [
+    stringAttribute("mode", mode),
+    stringAttribute("template", template),
+    stringAttribute("layout", layout),
+    stringAttribute("files", JSON.stringify(files)),
+    stringAttribute("visibleFiles", JSON.stringify(visibleFiles)),
+    stringAttribute("activeFile", activeFile),
+    stringAttribute("title", title),
+  ];
+
+  if (hideResult) {
+    attributes.push(stringAttribute("hideResult", "true"));
+  }
+
   return {
     type: "mdxJsxFlowElement",
     name: COMPONENT_NAME,
-    attributes: [
-      stringAttribute("mode", mode),
-      stringAttribute("template", template),
-      stringAttribute("files", JSON.stringify(files)),
-      stringAttribute("visibleFiles", JSON.stringify(visibleFiles)),
-      stringAttribute("activeFile", activeFile),
-      stringAttribute("title", title),
-    ],
+    attributes,
     children: [],
   };
 }
