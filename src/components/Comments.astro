@@ -34,7 +34,11 @@ const giscusConfig = {
 <script is:inline define:vars={{ giscusConfig }}>
   (function () {
     function currentTheme() {
-      return document.documentElement.getAttribute("data-theme") === "dark"
+      const attr = document.documentElement.getAttribute("data-theme");
+      if (attr === "dark" || attr === "light") return attr;
+      const stored = localStorage.getItem("theme");
+      if (stored === "dark" || stored === "light") return stored;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
     }
@@ -66,13 +70,20 @@ const giscusConfig = {
       mount.appendChild(script);
     }
 
-    function postThemeToGiscus(theme) {
-      const frame = document.querySelector("iframe.giscus-frame");
-      if (!frame || !frame.contentWindow) return;
-      frame.contentWindow.postMessage(
-        { giscus: { setConfig: { theme } } },
-        giscusConfig.origin,
+    function syncTheme(theme) {
+      // Update the script's data-theme so a not-yet-created (lazy) iframe
+      // picks up the current theme when giscus finally instantiates it.
+      const script = document.querySelector(
+        '#comments script[src*="giscus.app"]',
       );
+      if (script) script.setAttribute("data-theme", theme);
+      const frame = document.querySelector("iframe.giscus-frame");
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage(
+          { giscus: { setConfig: { theme } } },
+          giscusConfig.origin,
+        );
+      }
     }
 
     let observer;
@@ -81,7 +92,7 @@ const giscusConfig = {
       observer = new MutationObserver((mutations) => {
         for (const m of mutations) {
           if (m.attributeName === "data-theme") {
-            postThemeToGiscus(currentTheme());
+            syncTheme(currentTheme());
           }
         }
       });
