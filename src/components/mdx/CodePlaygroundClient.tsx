@@ -8,8 +8,43 @@ import {
   useSandpackNavigation,
   type SandpackFiles,
   type SandpackPredefinedTemplate,
+  type SandpackTheme,
 } from "@codesandbox/sandpack-react";
 import { useState } from "react";
+
+const playgroundTheme: SandpackTheme = {
+  colors: {
+    surface1: "var(--cp-surface1)",
+    surface2: "var(--cp-surface2)",
+    surface3: "var(--cp-surface3)",
+    clickable: "var(--cp-clickable)",
+    base: "var(--cp-base)",
+    disabled: "var(--cp-disabled)",
+    hover: "var(--cp-hover)",
+    accent: "var(--cp-accent)",
+    error: "var(--cp-error)",
+    errorSurface: "var(--cp-error-surface)",
+    warning: "var(--cp-warning)",
+    warningSurface: "var(--cp-warning-surface)",
+  },
+  syntax: {
+    plain: "var(--cp-syntax-plain)",
+    comment: { color: "var(--cp-syntax-comment)", fontStyle: "italic" },
+    keyword: "var(--cp-syntax-keyword)",
+    tag: "var(--cp-syntax-tag)",
+    punctuation: "var(--cp-syntax-punctuation)",
+    definition: "var(--cp-syntax-definition)",
+    property: "var(--cp-syntax-property)",
+    static: "var(--cp-syntax-static)",
+    string: "var(--cp-syntax-string)",
+  },
+  font: {
+    body: "var(--cp-font-body)",
+    mono: "var(--cp-font-mono)",
+    size: "var(--cp-font-size)",
+    lineHeight: "var(--cp-font-line-height)",
+  },
+};
 
 type PlaygroundMode = "playground" | "preview";
 type PlaygroundTemplate = Extract<
@@ -53,6 +88,7 @@ export default function CodePlaygroundClient({
     <SandpackProvider
       files={resolvedFiles}
       template={template}
+      theme={playgroundTheme}
       options={{
         activeFile: resolvedActiveFile,
         visibleFiles: resolvedVisibleFiles,

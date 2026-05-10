@@ -1,4 +1,58 @@
+html[data-theme="light"] {
+  --cp-surface1: var(--background);
+  --cp-surface2: color-mix(in srgb, var(--muted) 30%, var(--background));
+  --cp-surface3: color-mix(in srgb, var(--muted) 60%, var(--background));
+  --cp-base: var(--foreground);
+  --cp-clickable: color-mix(in srgb, var(--foreground) 70%, transparent);
+  --cp-disabled: color-mix(in srgb, var(--foreground) 40%, transparent);
+  --cp-hover: var(--accent);
+  --cp-accent: var(--accent);
+  --cp-error: #d1242f;
+  --cp-error-surface: color-mix(in srgb, #d1242f 12%, var(--background));
+  --cp-warning: #9a6700;
+  --cp-warning-surface: color-mix(in srgb, #9a6700 12%, var(--background));
+  --cp-syntax-plain: var(--foreground);
+  --cp-syntax-comment: #6e7781;
+  --cp-syntax-keyword: #cf222e;
+  --cp-syntax-tag: #116329;
+  --cp-syntax-punctuation: #24292f;
+  --cp-syntax-definition: #8250df;
+  --cp-syntax-property: #0550ae;
+  --cp-syntax-static: #0550ae;
+  --cp-syntax-string: #0a3069;
+}
+
+html[data-theme="dark"] {
+  --cp-surface1: var(--background);
+  --cp-surface2: color-mix(in srgb, var(--muted) 30%, var(--background));
+  --cp-surface3: color-mix(in srgb, var(--muted) 60%, var(--background));
+  --cp-base: var(--foreground);
+  --cp-clickable: color-mix(in srgb, var(--foreground) 70%, transparent);
+  --cp-disabled: color-mix(in srgb, var(--foreground) 40%, transparent);
+  --cp-hover: var(--accent);
+  --cp-accent: var(--accent);
+  --cp-error: #ff7b72;
+  --cp-error-surface: color-mix(in srgb, #ff7b72 18%, var(--background));
+  --cp-warning: #d29922;
+  --cp-warning-surface: color-mix(in srgb, #d29922 18%, var(--background));
+  --cp-syntax-plain: var(--foreground);
+  --cp-syntax-comment: #637777;
+  --cp-syntax-keyword: #c792ea;
+  --cp-syntax-tag: #7fdbca;
+  --cp-syntax-punctuation: #c792ea;
+  --cp-syntax-definition: #82aaff;
+  --cp-syntax-property: #addb67;
+  --cp-syntax-static: #f78c6c;
+  --cp-syntax-string: #ecc48d;
+}
+
 .code-playground {
+  --cp-font-body: inherit;
+  --cp-font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo,
+    monospace;
+  --cp-font-size: 0.8125rem;
+  --cp-font-line-height: 1.5;
   margin: 1.75rem 0;
   color: var(--foreground);
 }
@@ -245,7 +299,7 @@
 }
 
 .code-playground-preview-pane--result {
-  background: #fff;
+  background: var(--background);
 }
 
 .code-playground-preview-pane--console {
@@ -278,12 +332,20 @@
 .code-playground .sp-tabs {
   border-bottom-color: var(--border);
   background: color-mix(in srgb, var(--muted) 30%, var(--background));
+  height: 37px;
 }
-
+.code-playground .sp-tabs-scrollable-container {
+  height: 37px;
+  min-height: 30px;
+}
+  .code-playground .sp-tab-container {
+  height: 32px;
+}
 .code-playground .sp-tab-button {
   font-family: inherit;
   font-size: 0.75rem;
   font-weight: 700;
+  height: 32px;
 }
 
 .code-playground .sp-cm {
