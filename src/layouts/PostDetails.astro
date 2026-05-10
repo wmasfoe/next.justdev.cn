@@ -9,13 +9,14 @@ import Datetime from "@/components/Datetime.astro";
 import EditPost from "@/components/EditPost.astro";
 import Footer from "@/components/Footer.astro";
 import Header from "@/components/Header.astro";
+import LikeButton from "@/components/LikeButton";
 import ShareLinks from "@/components/ShareLinks.astro";
 import StructuredData from "@/components/StructuredData.astro";
 import Tag from "@/components/Tag.astro";
 import TOC from "@/components/TOC.astro";
 import { SITE } from "@/config";
 import Layout from "@/layouts/Layout.astro";
-import { getPath } from "@/utils/getPath";
+import { getPath, normalizeBlogSlug } from "@/utils/getPath";
 import { calculateReadingTime } from "@/utils/readingTime";
 import { slugifyStr } from "@/utils/slugify";
 
@@ -43,6 +44,7 @@ const {
 
 const { Content, headings } = await render(post);
 const readingTime = calculateReadingTime(post.body ?? "");
+const likeSlug = normalizeBlogSlug(post.id, post.filePath);
 
 let ogImageUrl: string | undefined;
 
@@ -117,6 +119,14 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
   />
   <Header />
   <BackButton />
+  <div
+    class:list={[
+      "z-30 fixed top-32 right-4",
+      "xl:top-8 xl:right-[max(1rem,calc((100vw-48rem)/2-15rem))]",
+    ]}
+  >
+    <LikeButton client:idle slug={likeSlug} />
+  </div>
   {toc && <TOC headings={headings} />}
   <main
     id="main-content"
