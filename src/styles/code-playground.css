@@ -188,13 +188,17 @@ html[data-theme="dark"] {
   height: 0.875rem;
 }
 
+/* Bound the body's height via explicit grid track sizing. Without this,
+   the implicit row is auto-sized to content and grid items end up at
+   content height regardless of body's max-height — CodeMirror then sees
+   an unbounded parent and disables internal scroll. */
 .code-playground-body {
   display: grid;
-  min-height: 24rem;
 }
 
 .code-playground-shell--row .code-playground-body {
   grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.88fr);
+  grid-template-rows: minmax(20rem, 26rem);
 }
 
 .code-playground-shell--row .code-playground-editor {
@@ -202,9 +206,8 @@ html[data-theme="dark"] {
 }
 
 .code-playground-shell--col .code-playground-body {
-  min-height: 28rem;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(12rem, 1fr) minmax(14rem, 1fr);
+  grid-template-rows: minmax(11rem, 15rem) minmax(13rem, 17rem);
 }
 
 .code-playground-shell--col .code-playground-editor {
@@ -213,13 +216,15 @@ html[data-theme="dark"] {
 
 .code-playground-shell--preview .code-playground-body {
   display: block;
-  min-height: 18rem;
+  min-height: 16rem;
+  max-height: 22rem;
 }
 
 .code-playground-editor,
 .code-playground-preview {
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .code-playground-shell--row .code-playground-editor,
@@ -348,8 +353,24 @@ html[data-theme="dark"] {
   height: 32px;
 }
 
+/* .sp-stack is a flex column (Sandpack default): .sp-tabs is fixed, .sp-cm
+   should take the rest. Use flex:1 + min-height:0 instead of height:100%
+   so the inner CodeMirror's .cm-scroller has a bounded height and can
+   actually scroll on wheel events. */
 .code-playground .sp-cm {
-  min-height: inherit;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.code-playground .cm-editor {
+  height: 100%;
+  max-height: 100%;
+}
+
+.code-playground .cm-scroller {
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .prose .code-playground pre,
@@ -380,7 +401,8 @@ html[data-theme="dark"] {
   .code-playground-shell--col .code-playground-body,
   .code-playground-body {
     display: block;
-    min-height: 22rem;
+    min-height: 18rem;
+    max-height: 24rem;
     grid-template-columns: none;
     grid-template-rows: none;
   }
@@ -388,7 +410,8 @@ html[data-theme="dark"] {
   .code-playground-editor,
   .code-playground-preview {
     display: none;
-    min-height: 22rem;
+    min-height: 18rem;
+    max-height: 24rem;
   }
 
   .code-playground-editor.is-active {

@@ -1,0 +1,865 @@
+---
+title: CSS 滚动驱动动画：让 @keyframes 跟着滚动条走
+pubDatetime: 2026-05-11T00:00:00+08:00
+description: "TBD"
+draft: false
+toc: true
+---
+
+之前做滚动动画，大多数时候逃不开 JavaScript。
+
+比如监听 `scroll`，或者用 `IntersectionObserver` 判断元素是否进入视口，然后再给元素加 class。这个方案当然能用，我之前也一直这么干。但它有一个问题：我们真正想表达的其实不是“滚到某个位置后执行一段 JS”，而是“这个元素在视口中的进度，应该映射到一段动画进度上”。
+
+最近看了 Josh W. Comeau 的这篇 [Scroll-Driven Animations](https://www.joshwcomeau.com/animation/scroll-driven-animations/)，感觉 CSS 现在终于开始原生解决这个问题了。
+
+核心 API 是 `animation-timeline`。
+
+## 先换一个理解方式
+
+我们平时写 CSS 动画，一般是这样：
+
+```css
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.item {
+  animation: fadeIn 300ms ease-out;
+}
+```
+
+这里的 `0% -> 100%` 很自然会被理解成时间：300ms 内从透明变成不透明。
+
+但是仔细想一下，`@keyframes` 里面的百分比并没有规定必须表示时间。它只是一个进度。以前这个进度由时间推动，现在也可以由滚动位置推动。
+
+这就是滚动驱动动画的关键：
+
+**把动画进度从时间轴切到滚动轴。**
+
+最简单的例子可以直接跑一下。滚动右侧预览里的容器，黄色卡片进入视口时会逐渐出现。
+
+```html playground template=static file=index.html playgroup=view-fade
+<main class="scroller">
+  <p>向下滚动这个区域</p>
+  <div class="spacer1"></div>
+  <div class="card">Hello animation-timeline</div>
+  <div class="spacer2"></div>
+</main>
+
+<style>
+  body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    background: #101010;
+  }
+
+  .scroller {
+    height: 320px;
+    overflow-y: auto;
+    padding: 24px;
+    color: white;
+  }
+
+  .spacer1 {
+    height: 280px;
+  }
+
+   .spacer2 {
+    height: 220px;
+  }
+
+  .card {
+    display: grid;
+    min-height: 100px;
+    place-items: center;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #ffd166, #fca311);
+    color: #1b1b1b;
+    font-size: 20px;
+    font-weight: 800;
+    animation: fadeIn linear;
+    animation-timeline: view();
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+</style>
+```
+
+`view()` 表示使用元素自己的 view progress timeline。说人话就是：元素从进入滚动容器视口到离开视口，这段过程会被映射成 `0% -> 100%`。
+
+用户向下滚动时，动画往前走；用户往回滚，动画也会倒着走；用户停住，动画也停住。
+
+这和传统的“触发一次动画”不一样。传统滚动动画更像开关，到了某个点就播放一次；滚动驱动动画更像进度条，滚动多少，动画就走多少。
+
+## timing function 仍然生效
+
+滚动驱动动画只是换了进度来源，并没有废掉 CSS 动画原来的能力。
+
+比如 `cubic-bezier()` 仍然可以用。下面这个例子里，方块刚进入视口时会转得更快，后面逐渐慢下来：
+
+```html playground template=static file=index.html playgroup=timing-ease-out
+<main class="scroller">
+  <p>向下滚动，观察方块旋转速度</p>
+  <div class="spacer1"></div>
+  <div class="box"></div>
+  <div class="spacer2"></div>
+</main>
+
+<style>
+  body {
+    margin: 0;
+    background: #fef3c7;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .scroller {
+    height: 320px;
+    overflow-y: auto;
+    padding: 24px;
+    color: white;
+  }
+
+  .spacer1 {
+    height: 280px;
+  }
+
+   .spacer2 {
+    height: 220px;
+  }
+
+  .box {
+    width: 120px;
+    height: 120px;
+    margin-inline: auto;
+    border-radius: 28px;
+    background: linear-gradient(135deg, #fb7185, #e11d48);
+    box-shadow: 0 20px 50px rgb(225 29 72 / 30%);
+    --super-ease-out: cubic-bezier(0.15, 0.75, 0.35, 1);
+    animation: spin var(--super-ease-out);
+    animation-timeline: view();
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>
+```
+
+甚至还可以配合 `linear()` 模拟 spring 曲线。这个能力很强，但我不太建议日常这么写，因为这种曲线维护成本很高，后面的人基本很难一眼看懂它在干嘛：
+
+```html playground template=static file=index.html playgroup=timing-spring
+<main class="scroller">
+  <p>这个例子用 linear() 做了一个类似弹簧的旋转曲线</p>
+  <div class="spacer1"></div>
+  <div class="box"></div>
+  <div class="spacer2"></div>
+</main>
+
+<style>
+  body {
+    margin: 0;
+    background: #ecfeff;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .scroller {
+    height: 320px;
+    overflow-y: auto;
+    padding: 24px;
+    color: white;
+  }
+
+  .spacer1 {
+    height: 280px;
+  }
+
+   .spacer2 {
+    height: 220px;
+  }
+
+  .box {
+    width: 120px;
+    height: 120px;
+    margin-inline: auto;
+    border-radius: 999px 999px 999px 16px;
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    box-shadow: 0 20px 50px rgb(20 184 166 / 28%);
+    --spring: linear(
+      0,
+      0.01,
+      0.04 1.8%,
+      0.161 3.7%,
+      0.81 10.6%,
+      1.181 16.4%,
+      1.247 19.3%,
+      1.253 21.1%,
+      1.19 25.4%,
+      1.058 30.8%,
+      1.001 33.5%,
+      0.938 39.6%,
+      0.936 41.6%,
+      0.999 53.9%,
+      1.015 64.3%,
+      0.996 79.6%,
+      1
+    );
+    animation: settle var(--spring);
+    animation-timeline: view();
+  }
+
+  @keyframes settle {
+    from {
+      transform: rotate(180deg);
+    }
+
+    to {
+      transform: rotate(0deg);
+    }
+  }
+</style>
+```
+
+## `animation-range` 控制动画在哪一段发生
+
+只写 `animation-timeline: view()` 时，默认范围大概是元素刚进入视口开始，到完全离开视口结束。
+
+但这并不总是我们想要的。
+
+比如一个元素从左侧滑入，如果动画开始时元素还没真正进入视口，那用户可能只看到动画后半段。这个时候就需要 `animation-range`。
+
+```html playground template=static file=index.html playgroup=range-contain
+<main class="scroller">
+  <p>继续向下滚动，观察这几个形状从左侧滑入</p>
+  <div class="spacer1"></div>
+  <section class="shapes">
+    <div class="shape circle"></div>
+    <div class="shape square"></div>
+    <div class="shape triangle"></div>
+  </section>
+  <div class="spacer2"></div>
+</main>
+
+<style>
+  body {
+    margin: 0;
+    background: #fff7ed;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .scroller {
+    height: 320px;
+    overflow-y: auto;
+    padding: 24px;
+    color: white;
+  }
+
+  .spacer1 {
+    height: 280px;
+  }
+
+   .spacer2 {
+    height: 220px;
+  }
+
+  .shapes {
+    display: grid;
+    gap: 20px;
+  }
+
+  .shape {
+    width: 96px;
+    height: 96px;
+    animation: slideIn linear backwards;
+    animation-timeline: view();
+    animation-range: contain;
+  }
+
+  .circle {
+    border-radius: 999px;
+    background: #22c55e;
+  }
+
+  .square {
+    background: #0ea5e9;
+  }
+
+  .triangle {
+    width: 0;
+    height: 0;
+    border-left: 56px solid transparent;
+    border-right: 56px solid transparent;
+    border-bottom: 96px solid #f97316;
+    background: transparent;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(-120%);
+    }
+
+    to {
+      transform: translateX(0);
+    }
+  }
+</style>
+```
+
+这里的 `contain` 表示元素完全进入视口后，才开始计算这段动画进度。
+
+需要注意 `backwards`。如果不加它，`slideIn` 的初始状态只会在动画范围开始后才生效。也就是说，元素在完全进入视口之前可能还是正常位置，等到动画范围开始时才突然应用 `translateX(-120%)`，视觉上会很奇怪。
+
+`animation-fill-mode: backwards` 的作用就是：即使动画还没正式开始，也先应用 `0%` 这一帧的样式。
+
+这个点很容易漏。
+
+## `entry` 和 `exit` 更适合进入/离开动画
+
+除了 `cover` 和 `contain`，还有两个很常用的范围：`entry` 和 `exit`。
+
+先看 `entry`。下面这个方块只会在“进入视口”这段范围里旋转：
+
+```html playground template=static file=index.html playgroup=entry-spin
+<main class="scroller">
+  <p>向下滚动，方块进入视口时才完成旋转</p>
+  <div class="spacer1"></div>
+  <div class="box"></div>
+  <div class="spacer2"></div>
+</main>
+
+<style>
+  body {
+    margin: 0;
+    background: #f8fafc;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .scroller {
+    height: 320px;
+    overflow-y: auto;
+    padding: 24px;
+    color: #333;
+  }
+
+  .spacer1 {
+    height: 280px;
+  }
+
+   .spacer2 {
+    height: 220px;
+  }
+
+  .box {
+    width: 120px;
+    height: 120px;
+    margin-inline: auto;
+    border-radius: 24px;
+    background: #6366f1;
+    animation: spin linear;
+    animation-timeline: view();
+    animation-range: entry;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>
+```
+
+如果只是想让元素进入视口时淡入，也可以用 `entry`：
+
+```html playground template=static file=index.html playgroup=entry-fade
+<main class="scroller">
+  <p>这些卡片只在进入视口时淡入</p>
+  <article class="photo">Capybara A</article>
+  <article class="photo">Capybara B</article>
+  <article class="photo">Capybara C</article>
+  <article class="photo">Capybara D</article>
+</main>
+
+<style>
+  body {
+    margin: 0;
+    background: #f0fdf4;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .scroller {
+    height: 320px;
+    overflow-y: auto;
+    padding: 24px;
+  }
+
+  .photo {
+    display: grid;
+    height: 200px;
+    margin: 0 0 80px;
+    place-items: center;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 72% 24%, #fef3c7, transparent 34%),
+      linear-gradient(135deg, #86efac, #16a34a);
+    color: white;
+    font-size: 20px;
+    font-weight: 900;
+    text-shadow: 0 2px 12px rgb(0 0 0 / 30%);
+    animation: fadeIn linear;
+    animation-timeline: view();
+    animation-range: entry;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+</style>
+```
+
+```html playground template=static file=index.html playgroup=entry-exit
+<main class="scroller">
+  <p>这些卡片进入时淡入，离开时淡出</p>
+  <article class="photo">Capybara A</article>
+  <article class="photo">Capybara B</article>
+  <article class="photo">Capybara C</article>
+  <article class="photo">Capybara D</article>
+</main>
+
+<style>
+  body {
+    margin: 0;
+    background: #e0f2fe;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .scroller {
+    height: 320px;
+    overflow-y: auto;
+    padding: 24px;
+  }
+
+  .photo {
+    display: grid;
+    height: 200px;
+    margin: 0 0 80px;
+    place-items: center;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 30% 30%, #fde68a, transparent 36%),
+      linear-gradient(135deg, #7dd3fc, #0284c7);
+    color: white;
+    font-size: 20px;
+    font-weight: 900;
+    text-shadow: 0 2px 12px rgb(0 0 0 / 30%);
+    animation:
+      fadeIn linear,
+      fadeOut linear;
+    animation-timeline: view(), view();
+    animation-range: entry, exit;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(32px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+</style>
+```
+
+`entry` 关注的是元素进入视口的这一段：从刚碰到视口边缘，到整个元素进入视口。
+
+同理，`exit` 关注的是元素离开视口的这一段。
+
+这块语法看起来有点绕，但逻辑很明确：第一个动画绑定第一个 timeline 和第一个 range，第二个动画绑定第二个 timeline 和第二个 range。
+
+我个人会尽量避免在一个选择器里堆太多逗号配置。简单场景可以这么写，复杂一点就需要拆 class，不然维护起来会很难读。
+
+## 更精细地控制范围
+
+`cover`、`contain`、`entry`、`exit` 是几组预设范围，但有时我们需要更精确。
+
+比如希望元素刚进入视口时开始动画，滚到视口中间时动画结束：
+
+```html playground template=static file=index.html playgroup=range-percentage
+<main class="scroller">
+  <p>这个例子在 cover 0% 开始，在 cover 50% 结束</p>
+  <div class="spacer1"></div>
+  <section class="shapes">
+    <div class="shape circle"></div>
+    <div class="shape square"></div>
+    <div class="shape diamond"></div>
+    <div class="shape pill"></div>
+  </section>
+  <div class="spacer2"></div>
+</main>
+
+<style>
+  body {
+    margin: 0;
+    background: #f5f3ff;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .scroller {
+    height: 320px;
+    overflow-y: auto;
+    padding: 24px;
+    color: #333;
+  }
+
+  .spacer1 {
+    height: 280px;
+  }
+
+   .spacer2 {
+    height: 220px;
+  }
+
+  .shapes {
+    display: grid;
+    gap: 20px;
+  }
+
+  .shape {
+    width: 96px;
+    height: 96px;
+    animation: slideIn linear backwards;
+    animation-timeline: view();
+    animation-range-start: cover 0%;
+    animation-range-end: cover 50%;
+  }
+
+  .circle {
+    border-radius: 999px;
+    background: #a855f7;
+  }
+
+  .square {
+    background: #ec4899;
+  }
+
+  .diamond {
+    background: #f59e0b;
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  }
+
+  .pill {
+    width: 150px;
+    border-radius: 999px;
+    background: #10b981;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(-120%);
+    }
+
+    to {
+      transform: translateX(0);
+    }
+  }
+</style>
+```
+
+```css
+.card {
+  animation: slideIn linear backwards;
+  animation-timeline: view();
+  animation-range-start: cover 0%;
+  animation-range-end: cover 50%;
+}
+```
+
+也可以写成简写：
+
+```css
+.card {
+  animation: slideIn linear backwards;
+  animation-timeline: view();
+  animation-range: cover 0% cover 50%;
+}
+```
+
+不过我更倾向于拆成 `animation-range-start` 和 `animation-range-end`。简写确实更短，但是一眼看过去不如长写清楚。
+
+CSS 里很多 shorthand 都有这个问题：写的时候爽，维护的时候痛。
+
+## `scroll()` 适合页面级进度
+
+前面说的 `view()` 是看某个元素在视口里的进度。
+
+还有一种是滚动进度 timeline，它关心的是滚动容器整体滚了多少。最常见的例子就是文章顶部阅读进度条：
+
+```html playground template=static file=index.html playgroup=scroll-progress
+<main class="article">
+  <div class="reading-indicator"></div>
+  <h1>一篇很长的文章</h1>
+  <p>滚动这个容器，顶部进度条会跟着增长。</p>
+  <p>这里用的是 scroll timeline，不是某个元素进入视口的 view timeline。</p>
+  <p>它关注的是整个滚动容器已经滚过了多少。</p>
+  <p>所以它适合阅读进度、横向画廊进度这类场景。</p>
+  <p>但如果只是为了告诉用户页面滚动位置，浏览器本身的滚动条其实已经做了这件事。</p>
+  <p>所以我更愿意把它当成视觉增强，而不是核心信息。</p>
+</main>
+
+<style>
+  body {
+    margin: 0;
+    background: #f8fafc;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .article {
+    height: 360px;
+    overflow-y: auto;
+    scroll-timeline: --article-y block;
+    color: #0f172a;
+    line-height: 1.8;
+  }
+
+  .reading-indicator {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 6px;
+    transform-origin: left center;
+    background: #ef4444;
+    animation: grow linear;
+    animation-timeline: --article-y;
+  }
+
+  h1,
+  p {
+    margin-inline: 24px;
+  }
+
+  p {
+    min-height: 130px;
+    font-size: 18px;
+  }
+
+  @keyframes grow {
+    from {
+      transform: scaleX(0);
+    }
+  }
+</style>
+```
+
+老实说，这类场景我能想到的不算多。阅读进度条算一个，但浏览器本身已经有滚动条了，所以这个功能更多是视觉增强，不应该成为信息获取的唯一方式。
+
+## 也可以让 A 元素控制 B 元素
+
+上面的例子都是“谁滚动，谁自己动”。
+
+但有些布局里，我们希望右侧内容进入视口时，左侧 sticky 元素跟着变化。这时就需要命名 timeline。
+
+```html playground template=static file=index.html playgroup=linked-timeline
+<main class="scroller">
+  <section class="layout">
+    <aside class="left">
+      <div class="sticky-box">Tracked</div>
+    </aside>
+    <article class="right">
+      <div class="spacer"></div>
+      <p class="content">右侧这段内容进入视口时，左侧 sticky 卡片会淡入。</p>
+      <div class="spacer"></div>
+    </article>
+  </section>
+</main>
+
+<style>
+  body {
+    margin: 0;
+    background: #111827;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .scroller {
+    height: 360px;
+    overflow-y: auto;
+    color: white;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 24px;
+    min-height: 900px;
+    padding: 24px;
+    timeline-scope: --tracked-content;
+  }
+
+  .left {
+    position: relative;
+  }
+
+  .sticky-box {
+    position: sticky;
+    top: 24px;
+    display: grid;
+    height: 120px;
+    place-items: center;
+    border-radius: 18px;
+    background: #f97316;
+    font-weight: 900;
+    animation:
+      fadeIn linear backwards,
+      fadeOut linear forwards;
+    animation-timeline: --tracked-content, --tracked-content;
+    animation-range: entry, exit;
+  }
+
+  .content {
+    min-height: 160px;
+    margin: 0;
+    padding: 24px;
+    border-radius: 18px;
+    background: #2563eb;
+    view-timeline: --tracked-content;
+  }
+
+  .spacer {
+    height: 320px;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0.2;
+      transform: scale(0.85);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes fadeOut {
+    to {
+      opacity: 0.2;
+      transform: scale(0.85);
+    }
+  }
+</style>
+```
+
+这里 `.content` 负责创建一个 timeline，`.sticky-box` 订阅这个 timeline。
+
+为什么还需要 `timeline-scope`？
+
+因为这个命名 timeline 不是全局变量。如果创建 timeline 的元素和使用 timeline 的元素不是父子关系，就需要在它们共同的祖先上声明作用域。这个设计有点像 CSS 自定义属性的作用域，但又不完全一样。
+
+这块能力很强，不过我觉得也最容易写乱。实际项目里如果要用，最好把结构和命名设计清楚，不要随手起一堆 `--timeline-1`、`--timeline-2`。
+
+## 需要注意的几个点
+
+第一，`animation` 简写会重置 `animation-timeline`。
+
+所以最好把 `animation-timeline` 写在 `animation` 后面：
+
+```css
+.item {
+  animation: fadeIn linear;
+  animation-timeline: view();
+}
+```
+
+第二，滚动动画不代表可以不考虑可访问性。
+
+如果动画只是装饰，可以尊重用户的减少动态效果设置：
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    animation-timeline: none;
+  }
+}
+```
+
+第三，先把它当作 progressive enhancement。
+
+也就是说，没有它页面也应该正常可用。有支持就增强体验，不支持也不要影响核心内容。
+
+可以用 `@supports` 做兜底：
+
+```css
+@supports (animation-timeline: view()) {
+  .item {
+    animation: fadeIn linear;
+    animation-timeline: view();
+    animation-range: entry;
+  }
+}
+```
+
+第四，动画属性尽量优先选 `transform` 和 `opacity`。
+
+虽然 API 变了，但渲染成本没有变。不要因为滚动驱动动画写起来方便，就开始疯狂驱动 `width`、`height`、`top`、`left`，最后布局抖动还是会回到自己身上。
+
+## 总结
+
+我对 `animation-timeline` 的理解是：它不是发明了一套全新的动画系统，而是把 CSS 原本的 `@keyframes` 接到了新的进度来源上。
+
+以前动画进度来自时间，现在可以来自：
+
+- 元素进出视口的进度：`view()`
+- 滚动容器整体滚动进度：`scroll()` 或命名 `scroll-timeline`
+- 某个命名元素的 view timeline：`view-timeline`
+
+这个设计挺优雅，因为之前会写 `@keyframes` 的人，迁移成本其实不高。
+
+但它也不是所有滚动交互的银弹。我的判断是：
+
+- 简单的进入、离开、阅读进度，可以优先考虑 CSS scroll-driven animations。
+- 需要复杂状态、业务逻辑、异步数据参与的滚动交互，还是 JavaScript 更合适。
+- 动画属于体验增强，不应该影响页面的基本阅读和操作。
+
+如果只是想让页面有一点跟手的动效，这个 API 已经很值得尝试了。
