@@ -21,6 +21,7 @@ const blog = defineCollection({
       description: z.string(),
       canonicalURL: z.string().optional(),
       hideEditPost: z.boolean().optional(),
+      toc: z.boolean().optional(),
       timezone: z.string().optional(),
       // Additional fields from existing posts
       source: z.string().optional(),

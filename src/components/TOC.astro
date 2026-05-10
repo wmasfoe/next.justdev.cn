@@ -1,0 +1,151 @@
+---
+import type { MarkdownHeading } from "astro";
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+const items = headings.filter((h) => h.depth >= 2 && h.depth <= 4);
+---
+
+{
+  items.length > 0 && (
+    <>
+      <button
+        id="toc-toggle"
+        type="button"
+        class="xl:hidden fixed top-20 right-4 z-30 rounded-full bg-background border border-border shadow-md p-2 hover:bg-muted/40"
+        aria-label="目录"
+        aria-expanded="false"
+        aria-controls="toc-panel"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <circle cx="4" cy="6" r="1" />
+          <circle cx="4" cy="12" r="1" />
+          <circle cx="4" cy="18" r="1" />
+        </svg>
+      </button>
+
+      <div
+        id="toc-backdrop"
+        class="xl:hidden hidden fixed inset-0 z-30 bg-foreground/30"
+        aria-hidden="true"
+      />
+
+      <aside
+        id="toc-panel"
+        class:list={[
+          "z-40",
+          "fixed top-0 right-0 h-svh w-72 max-w-[80vw] bg-background border-l border-border shadow-xl translate-x-full transition-transform overflow-y-auto p-6",
+          "xl:translate-x-0 xl:top-24 xl:right-[max(1rem,calc((100vw-48rem)/2-15rem))] xl:h-auto xl:max-h-[calc(100vh-8rem)] xl:w-56 xl:border-0 xl:shadow-none xl:p-0 xl:bg-transparent",
+        ]}
+        aria-label="目录"
+      >
+        <p class="text-sm font-semibold tracking-wide text-foreground/70 mb-3">
+          目录
+        </p>
+        <ol class="text-sm space-y-1.5">
+          {items.map((h) => (
+            <li
+              class:list={[h.depth === 3 && "pl-3", h.depth === 4 && "pl-6"]}
+            >
+              <a
+                href={`#${h.slug}`}
+                data-toc-link={h.slug}
+                class="block py-0.5 text-foreground/65 hover:text-accent border-l-2 border-transparent pl-2 leading-snug"
+              >
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </aside>
+
+      <script is:inline data-astro-rerun>
+        (() => {
+          const init = () => {
+            const panel = document.getElementById("toc-panel");
+            const backdrop = document.getElementById("toc-backdrop");
+            const toggle = document.getElementById("toc-toggle");
+            if (!panel || !toggle || !backdrop) return;
+
+            const open = () => {
+              panel.classList.remove("translate-x-full");
+              backdrop.classList.remove("hidden");
+              toggle.setAttribute("aria-expanded", "true");
+            };
+            const close = () => {
+              panel.classList.add("translate-x-full");
+              backdrop.classList.add("hidden");
+              toggle.setAttribute("aria-expanded", "false");
+            };
+            toggle.addEventListener("click", () => {
+              if (panel.classList.contains("translate-x-full")) open();
+              else close();
+            });
+            backdrop.addEventListener("click", close);
+            panel.addEventListener("click", (e) => {
+              if (e.target instanceof HTMLAnchorElement) close();
+            });
+
+            const links = Array.from(
+              panel.querySelectorAll("a[data-toc-link]"),
+            );
+            const targets = links
+              .map((a) => document.getElementById(a.dataset.tocLink))
+              .filter(Boolean);
+            if (targets.length === 0) return;
+
+            const setActive = (slug) => {
+              links.forEach((a) => {
+                const isActive = a.dataset.tocLink === slug;
+                a.classList.toggle("text-accent", isActive);
+                a.classList.toggle("border-accent", isActive);
+                a.classList.toggle("text-foreground/65", !isActive);
+                a.classList.toggle("border-transparent", !isActive);
+              });
+            };
+
+            setActive(targets[0].id);
+
+            const observer = new IntersectionObserver(
+              (entries) => {
+                const visible = entries
+                  .filter((e) => e.isIntersecting)
+                  .map((e) => e.target)
+                  .sort(
+                    (a, b) =>
+                      a.getBoundingClientRect().top -
+                      b.getBoundingClientRect().top,
+                  );
+                if (visible[0]) setActive(visible[0].id);
+              },
+              { rootMargin: "-15% 0px -70% 0px", threshold: 0 },
+            );
+            targets.forEach((t) => observer.observe(t));
+          };
+
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", init);
+          } else {
+            init();
+          }
+        })();
+      </script>
+    </>
+  )
+}
