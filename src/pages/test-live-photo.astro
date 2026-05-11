@@ -1,0 +1,176 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import LivePhoto from "@/components/LivePhoto.tsx";
+
+// 使用一组通用的测试资源
+const PHOTO_SRC =
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800";
+const VIDEO_SRC =
+  "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4";
+
+// Live Photo 测试资源（来自 Lynan 的仓库）
+const APPLE_PHOTO_SRC =
+  "https://raw.githubusercontent.com/LynanBreeze/live-photo/main/public/test/live.jpg";
+const APPLE_VIDEO_SRC =
+  "https://raw.githubusercontent.com/LynanBreeze/live-photo/main/public/test/live.mp4";
+---
+
+<Layout title="Live Photo 组件测试">
+  <main class="mx-auto max-w-4xl px-4 py-12">
+    <h1 class="mb-4 text-4xl font-bold">Live Photo 组件测试</h1>
+    <p class="mb-8 text-gray-600">
+      参考
+      <a
+        href="https://lynan.cn/live-photo/"
+        class="text-blue-600 underline"
+        target="_blank">Lynan 的 Live Photo 实现</a
+      >
+      与
+      <a
+        href="https://github.com/LynanBreeze/live-photo"
+        class="text-blue-600 underline"
+        target="_blank">GitHub 仓库</a
+      >。
+    </p>
+
+    <div class="space-y-12">
+      <!-- 我的实现 vs Apple SDK 对比 -->
+      <section>
+        <h2 class="mb-4 text-2xl font-semibold">🆚 两种实现方式对比</h2>
+        <div class="grid gap-6 md:grid-cols-2">
+          <div>
+            <h3 class="mb-2 text-lg font-medium">我的实现（默认）</h3>
+            <p class="mb-3 text-sm text-gray-600">点击 LIVE 图标播放视频</p>
+            <LivePhoto
+              client:load
+              photoSrc={PHOTO_SRC}
+              videoSrc={VIDEO_SRC}
+              loop={true}
+              alt="自定义实现示例"
+            />
+          </div>
+          <div>
+            <h3 class="mb-2 text-lg font-medium">Apple 官方 SDK</h3>
+            <p class="mb-3 text-sm text-gray-600">
+              点击（桌面）/ 长按（移动端）播放
+            </p>
+            <LivePhoto
+              client:load
+              photoSrc={APPLE_PHOTO_SRC}
+              videoSrc={APPLE_VIDEO_SRC}
+              useApple={true}
+              alt="Apple SDK 示例"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- 功能对比表格 -->
+      <section>
+        <h2 class="mb-4 text-2xl font-semibold">📊 功能对比</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="border-b-2 border-gray-300 bg-gray-50">
+                <th class="px-4 py-2 text-left">特性</th>
+                <th class="px-4 py-2 text-left">我的实现</th>
+                <th class="px-4 py-2 text-left">Apple SDK</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b">
+                <td class="px-4 py-2 font-medium">兼容性</td>
+                <td class="px-4 py-2">✅ 更好（含 iOS 微信）</td>
+                <td class="px-4 py-2">❌ iOS 微信异常</td>
+              </tr>
+              <tr class="border-b">
+                <td class="px-4 py-2 font-medium">声音</td>
+                <td class="px-4 py-2">✅ 可选静音/有声</td>
+                <td class="px-4 py-2">❌ 仅静音</td>
+              </tr>
+              <tr class="border-b">
+                <td class="px-4 py-2 font-medium">播放效果</td>
+                <td class="px-4 py-2">基础切换</td>
+                <td class="px-4 py-2">✅ 更丰富（帧解析）</td>
+              </tr>
+              <tr class="border-b">
+                <td class="px-4 py-2 font-medium">触发方式</td>
+                <td class="px-4 py-2">点击</td>
+                <td class="px-4 py-2">点击/长按</td>
+              </tr>
+              <tr class="border-b">
+                <td class="px-4 py-2 font-medium">跨域问题</td>
+                <td class="px-4 py-2">✅ 无</td>
+                <td class="px-4 py-2">⚠️ 需处理</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 参数示例 -->
+      <section>
+        <h2 class="mb-4 text-2xl font-semibold">🎛️ 参数示例</h2>
+
+        <div class="space-y-8">
+          <div>
+            <h3 class="mb-2 text-lg font-medium">基础用法（静音、单次播放）</h3>
+            <LivePhoto
+              client:load
+              photoSrc={PHOTO_SRC}
+              videoSrc={VIDEO_SRC}
+              alt="基础示例"
+            />
+          </div>
+
+          <div>
+            <h3 class="mb-2 text-lg font-medium">循环播放</h3>
+            <LivePhoto
+              client:load
+              photoSrc="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800"
+              videoSrc={VIDEO_SRC}
+              loop={true}
+              alt="循环播放示例"
+            />
+          </div>
+
+          <div>
+            <h3 class="mb-2 text-lg font-medium">有声音（50% 音量）</h3>
+            <LivePhoto
+              client:load
+              photoSrc="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800"
+              videoSrc={VIDEO_SRC}
+              muted={false}
+              volume={50}
+              alt="有声音示例"
+            />
+          </div>
+
+          <div>
+            <h3 class="mb-2 text-lg font-medium">自定义样式</h3>
+            <LivePhoto
+              client:load
+              photoSrc="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800"
+              videoSrc={VIDEO_SRC}
+              className="shadow-2xl"
+              loop={true}
+              alt="自定义样式示例"
+            />
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="mt-12 rounded-lg bg-blue-50 p-6">
+      <h3 class="mb-2 text-lg font-semibold">💡 使用说明</h3>
+      <ul class="list-inside list-disc space-y-1 text-sm text-gray-700">
+        <li>我的实现：点击左上角的 "LIVE" 图标播放视频</li>
+        <li>Apple SDK：点击（桌面）或长按（移动端）触发播放</li>
+        <li>播放时图标会有脉冲动画效果</li>
+        <li>
+          使用 <code class="rounded bg-gray-200 px-1">useApple</code> 参数切换两种实现
+        </li>
+      </ul>
+    </div>
+  </main>
+</Layout>
