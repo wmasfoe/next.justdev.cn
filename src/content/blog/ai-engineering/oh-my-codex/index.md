@@ -3,7 +3,7 @@ title: OMX 让 Codex 再次伟大
 pubDatetime: 2026-05-16T00:00:00+00:00
 tags: ['codex', 'agent', 'engineering']
 draft: false
-description: Example of a markdown file with code blocks and syntax highlighting
+description: oh-my-codex 是套在 Codex 外面的编排层，用 $deep-interview / $ralplan / $ralph 三步工作流让 Agent 干活更聪明，本文带你跑通单人工作流。
 ---
 
 现在 Vibe Coding 时会遇到很多痛点：
@@ -31,8 +31,9 @@ description: Example of a markdown file with code blocks and syntax highlighting
 你可以理解为， Codex 是一个很聪明的实习生，它可以帮你来完成一些工作，但缺少一套工作流来告诉它什么时候做什么样的事情。
 有了 OMX 之后，它可以帮你组织 agent 怎么更聪明的干活，减少人工的介入。
 
-官网地址：<https://oh-my-codex.dev>
-GitHub 地址：<https://github.com/Yeachan-Heo/oh-my-codex>
+官网地址：[https://oh-my-codex.dev](https://oh-my-codex.dev)
+
+GitHub 地址：[https://github.com/Yeachan-Heo/oh-my-codex](https://github.com/Yeachan-Heo/oh-my-codex)
 
 ## 环境要求
 
@@ -61,8 +62,8 @@ omx setup
 omx doctor
 ```
 
-> 我使用了 volta 包管理工具类似 nvm、fnm，直接使用 npm install -g 也可以
->
+> 我使用了 volta 包管理工具类似 nvm、fnm，直接使用 npm install -g 也是可以的
+
 > 安装后执行 omx doctor 输出和下方一致（全部显示OK）则代表安装成功
 
 ![image-20260516214446817](./imgs/image-20260516214446817.png)
