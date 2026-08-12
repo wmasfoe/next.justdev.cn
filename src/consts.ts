@@ -42,7 +42,7 @@ export const SITE: Site = {
   postPerPage: 10,
   scheduledPostMargin: 15 * 60 * 1000,
   showArchives: false,
-  showBackButton: false,
+  showBackButton: true,
   editPost: {
     enabled: true,
     text: "Edit on GitHub",
@@ -50,7 +50,7 @@ export const SITE: Site = {
   },
   dynamicOgImage: true,
   lang: "zh-CN",
-  timezone: "Asia/Shanghai",
+  timezone: "Asia/Singapore",
 };
 
 export const SITE_TITLE = SITE.title;
