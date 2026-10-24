@@ -18,6 +18,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Redirect from steipete.me/*.md URLs to steipete.md/* (#133)
 
 ### Fixed
+- iOS Chrome and Edge swipe-back skipping every in-site page and returning to the first page opened
+  - Astro's client router calls `history.pushState` only after fetching the next page, which is after the tap's user activation has ended
+  - WebKit then hides those history entries from the system back gesture
+  - The new entry is now created synchronously during the tap, and the router fills that same entry in once the page arrives
+  - View transition animations are unchanged
 - Slow theme switching animation on iPhone Safari (#122)
   - Removed universal CSS transitions that caused performance issues
   - Targeted only elements that actually change during theme switching

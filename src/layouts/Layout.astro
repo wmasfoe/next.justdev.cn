@@ -3,6 +3,7 @@ import { ViewTransitions } from "astro:transitions";
 import { SITE } from "@/config";
 import "@/styles/global.css";
 import Analytics from "@/components/Analytics.astro";
+import historyOnTap from "../scripts/history-on-tap.js?raw";
 
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
 
@@ -127,6 +128,7 @@ const structuredData = {
       )
     }
 
+    <script is:inline set:html={historyOnTap} />
     <ViewTransitions />
 
     <script is:inline src="/toggle-theme.js"></script>
