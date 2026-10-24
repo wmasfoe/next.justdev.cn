@@ -370,10 +370,11 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
   }
   backToTop();
 
-  /* Go to page start after page swap */
-  document.addEventListener("astro:after-swap", () =>
-    window.scrollTo({ left: 0, top: 0, behavior: "instant" }),
-  );
+  /* New pages open at the top. History traversal restores its own scroll. */
+  document.addEventListener("astro:after-swap", () => {
+    if (document.documentElement.getAttribute("data-astro-transition") === "back") return;
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" });
+  });
 
   /** Add lazy loading to all images in the article */
   function addLazyLoading() {
