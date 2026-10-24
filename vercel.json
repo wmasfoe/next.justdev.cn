@@ -7,6 +7,17 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "^blog\\.justdev\\.cn$"
+        }
+      ],
+      "destination": "https://blog.jiaqi.im/:path*",
+      "permanent": true
+    },
+    {
       "source": "/:year(\\d{4})/:month(\\d{2})/:day(\\d{2})/:slug",
       "destination": "/posts/:slug",
       "permanent": true
@@ -26,21 +37,14 @@
       "destination": "/tags/:category",
       "permanent": true
     },
-    { "source": "/tag/:tag", "destination": "/tags/:tag", "permanent": true },
     {
-      "source": "/20:year/:month/:day/:slug(.*)",
-      "destination": "/posts/:slug",
+      "source": "/tag/:tag",
+      "destination": "/tags/:tag",
       "permanent": true
     },
     {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "^(?!(?:jiaqi\\.im|blog\\.jiaqi\\.im|justdev\\.cn|blog\\.justdev\\.cn|.*\\.vercel\\.app)$).*$"
-        }
-      ],
-      "destination": "https://blog.justdev.cn/:path*",
+      "source": "/20:year/:month/:day/:slug(.*)",
+      "destination": "/posts/:slug",
       "permanent": true
     }
   ],
@@ -119,7 +123,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self' https://blog.justdev.cn https://*.vercel.app https://platform.twitter.com https://syndication.twitter.com https://player.vimeo.com https://vimeo.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: https://blog.justdev.cn https://*.vercel.app https://platform.twitter.com https://cdn.syndication.twimg.com https://player.vimeo.com https://vercel.live https://va.vercel-scripts.com https://giscus.app; style-src 'self' 'unsafe-inline' https://blog.justdev.cn https://*.vercel.app https://platform.twitter.com https://giscus.app; img-src 'self' data: https: blob: https://ghchart.rshah.org; font-src 'self' https://blog.justdev.cn https://*.vercel.app; connect-src 'self' https://blog.justdev.cn https://*.vercel.app https://platform.twitter.com https://player.vimeo.com https://vimeo.com https://vitals.vercel-insights.com https://va.vercel-scripts.com https://giscus.app; media-src 'self' https://blog.justdev.cn https://*.vercel.app https://player.vimeo.com https://vimeo.com; object-src 'none'; frame-ancestors 'none'; frame-src https://platform.twitter.com https://syndication.twitter.com https://player.vimeo.com https://vercel.live https://www.youtube.com https://youtube.com https://*.youtube.com https://www.youtube-nocookie.com https://*.youtube-nocookie.com https://giscus.app; worker-src 'self' blob:"
+          "value": "default-src 'self' https://blog.jiaqi.im https://*.vercel.app https://platform.twitter.com https://syndication.twitter.com https://player.vimeo.com https://vimeo.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: https://blog.jiaqi.im https://*.vercel.app https://platform.twitter.com https://cdn.syndication.twimg.com https://player.vimeo.com https://vercel.live https://va.vercel-scripts.com https://giscus.app; style-src 'self' 'unsafe-inline' https://blog.jiaqi.im https://*.vercel.app https://platform.twitter.com https://giscus.app; img-src 'self' data: https: blob: https://ghchart.rshah.org; font-src 'self' https://blog.jiaqi.im https://*.vercel.app; connect-src 'self' https://blog.jiaqi.im https://*.vercel.app https://platform.twitter.com https://player.vimeo.com https://vimeo.com https://vitals.vercel-insights.com https://va.vercel-scripts.com https://giscus.app; media-src 'self' https://blog.jiaqi.im https://*.vercel.app https://player.vimeo.com https://vimeo.com; object-src 'none'; frame-ancestors 'none'; frame-src https://platform.twitter.com https://syndication.twitter.com https://player.vimeo.com https://vercel.live https://www.youtube.com https://youtube.com https://*.youtube.com https://www.youtube-nocookie.com https://*.youtube-nocookie.com https://giscus.app; worker-src 'self' blob:"
         }
       ]
     }

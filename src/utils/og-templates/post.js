@@ -1,4 +1,5 @@
 import satori from "satori";
+import { SITE } from "../../config";
 // import { html } from "satori-html";
 import loadGoogleFonts from "../loadGoogleFont";
 
@@ -7,7 +8,7 @@ import loadGoogleFonts from "../loadGoogleFont";
  *
  * This template generates social media preview cards for blog posts.
  *
- * CUSTOMIZATION: We override the default behavior to show "steipete.me"
+ * CUSTOMIZATION: We override the default behavior to show the site hostname
  * on the right side instead of the author name (Jacky Li).
  * This avoids redundancy since the author name already appears on the left
  * with "by Jacky Li".
@@ -213,7 +214,7 @@ export default async (post) => {
                             type: "span",
                             props: {
                               style: { overflow: "hidden", fontWeight: "bold" },
-                              children: "justdev.cn",
+                              children: new URL(SITE.website).hostname,
                             },
                           },
                         ],
@@ -231,7 +232,9 @@ export default async (post) => {
       width: 1200,
       height: 630,
       embedFont: true,
-      fonts: await loadGoogleFonts(post.data.title + post.data.author + "justdev.cn" + "by"),
+      fonts: await loadGoogleFonts(
+        post.data.title + post.data.author + new URL(SITE.website).hostname + "by",
+      ),
     },
   );
 };

@@ -1,4 +1,4 @@
-# blog.justdev.cn
+# blog.jiaqi.im
 
 Personal website and blog, built with [Astro](https://astro.build) and deployed on [Vercel](https://vercel.com).
 
@@ -37,7 +37,7 @@ Forked from [steipete/steipete.me](https://github.com/steipete/steipete.me) (Ast
 
 ## Deployment
 
-Deployed on Vercel. Connect this repo in the Vercel dashboard and bind the `blog.justdev.cn` and `blog.jiaqi.im` domains. The host redirect in `vercel.json` allows both domains, their apex domains (`justdev.cn` and `jiaqi.im`), and Vercel preview domains so navigation stays on the current host. Other hosts redirect to `blog.justdev.cn`.
+Deployed on Vercel. Build settings, redirects, and response headers are configured in [`vercel.json`](vercel.json).
 
 ## License
 

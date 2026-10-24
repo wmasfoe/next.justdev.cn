@@ -31,9 +31,9 @@ interface Site {
 
 // Site configuration
 export const SITE: Site = {
-  website: "https://blog.justdev.cn/",
+  website: "https://blog.jiaqi.im/",
   author: "Jacky",
-  profile: "https://blog.justdev.cn/about",
+  profile: "https://blog.jiaqi.im/about",
   desc: "hello",
   title: "Jacky's Blog",
   ogImage: "avatar.jpg",
