@@ -38,7 +38,7 @@ Astro 5 static site (Vercel-deployed) with React 19 islands, MDX content, Tailwi
 
 **URL routing & redirects.** Posts live at `/posts/<slug>`. Three layers handle legacy URLs from the old WordPress/Jekyll site:
 
-1. [vercel.json](vercel.json) — production redirects for `/YYYY/MM/DD/slug`, `/blog/...`, `/categories/...`, `/tag/:tag`, plus a host-level redirect that forces `blog.justdev.cn`. It also has `rewrites` that serve `.md` versions of pages when the request `Accept: text/markdown`.
+1. [vercel.json](vercel.json) — production redirects for `/YYYY/MM/DD/slug`, `/blog/...`, `/categories/...`, `/tag/:tag`, plus a host-level redirect to `blog.justdev.cn` for hosts other than `jiaqi.im`, `justdev.cn`, their `blog` subdomains, and Vercel preview domains. Keep both domain families allowed so navigation stays on the current host. It also has `rewrites` that serve `.md` versions of pages when the request `Accept: text/markdown`.
 2. [src/middleware.js](src/middleware.js) — runtime fallback for `/blog/*` → `/posts/*` (covers dev and any path the static rules miss).
 3. [astro.config.mjs](astro.config.mjs) sitemap `serialize` — assigns `priority`/`changefreq` per URL pattern (homepage, recent years, tags, pagination); strips trailing slashes.
 

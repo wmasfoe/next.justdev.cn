@@ -37,7 +37,7 @@ Forked from [steipete/steipete.me](https://github.com/steipete/steipete.me) (Ast
 
 ## Deployment
 
-Deployed on Vercel. Connect this repo in the Vercel dashboard and bind the `blog.justdev.cn` domain.
+Deployed on Vercel. Connect this repo in the Vercel dashboard and bind the `blog.justdev.cn` and `blog.jiaqi.im` domains. The host redirect in `vercel.json` allows both domains, their apex domains (`justdev.cn` and `jiaqi.im`), and Vercel preview domains so navigation stays on the current host. Other hosts redirect to `blog.justdev.cn`.
 
 ## License
 

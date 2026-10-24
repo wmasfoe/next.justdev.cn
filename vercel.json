@@ -37,7 +37,7 @@
       "has": [
         {
           "type": "host",
-          "value": "^(?!(blog\\.justdev\\.cn|.*\\.vercel\\.app)).*$"
+          "value": "^(?!(?:jiaqi\\.im|blog\\.jiaqi\\.im|justdev\\.cn|blog\\.justdev\\.cn|.*\\.vercel\\.app)$).*$"
         }
       ],
       "destination": "https://blog.justdev.cn/:path*",
