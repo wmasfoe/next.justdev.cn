@@ -4,6 +4,8 @@ import { SITE } from "@/config";
 import "@/styles/global.css";
 import Analytics from "@/components/Analytics.astro";
 import historyOnTap from "../scripts/history-on-tap.js?raw";
+import iosChromeDocumentNav from "../scripts/ios-chrome-document-nav.js?raw";
+import historyDebug from "../scripts/history-debug.js?raw";
 
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
 
@@ -128,6 +130,8 @@ const structuredData = {
       )
     }
 
+    <script is:inline set:html={iosChromeDocumentNav} />
+    <script is:inline set:html={historyDebug} />
     <script is:inline set:html={historyOnTap} />
     <ViewTransitions />
 

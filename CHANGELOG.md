@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Redirect from steipete.me/*.md URLs to steipete.md/* (#133)
 
 ### Fixed
+- iOS Chrome swipe-back still loading the previous page as a new document after the in-tap history entry
+  - The system swipe still loads the previous URL after a gesture-timed `pushState`. WebKit skips un-gestured script entries (bug 248303) and Chromium iOS skips those automatic items, but `history.back()` in desktop WebKit stays a same-document `popstate`, so that path cannot show this reload
+  - iOS Chrome and Edge now follow links as normal document loads, which the back-forward cache can restore with scroll position. Safari and desktop keep client-side transitions
+  - `?debug-history=1` shows an on-page log of history and `pageshow` events for a real-device check. It stays off otherwise
 - iOS Chrome swipe-back loading the previous page again, and back navigation jumping to the top
   - The history entry created during the tap was a copy of the current URL, and `history.replaceState` pointed it at the next page only after the tap ended
   - iOS Chrome then loads that previous URL as a new document, so the client router's popstate handler never runs

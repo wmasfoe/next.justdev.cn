@@ -7,8 +7,13 @@
  * destination then, already carrying { index, scrollX, scrollY }. The router
  * writes that same entry when the URL still differs. Back uses Astro's normal
  * popstate path, including scroll restoration, with no document reload.
+ *
+ * iOS Chrome and Edge (CriOS, EdgiOS) are excluded. Their swipe does not
+ * restore a pushState entry in place; ios-chrome-document-nav.js lets those
+ * taps load a real document instead.
  */
 (() => {
+  if (/CriOS|EdgiOS/.test(navigator.userAgent)) return;
   const activation = navigator.userActivation;
   if (!activation || window.__historyOnTapInstalled) return;
   window.__historyOnTapInstalled = true;
