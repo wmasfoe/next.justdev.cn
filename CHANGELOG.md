@@ -18,16 +18,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Redirect from steipete.me/*.md URLs to steipete.md/* (#133)
 
 ### Fixed
-- iOS Chrome swipe-back loading the previous page again, and back navigation jumping to the top
-  - The history entry created during the tap was a copy of the current URL, and `history.replaceState` pointed it at the next page only after the tap ended
-  - iOS Chrome then loads that previous URL as a new document, so the client router's popstate handler never runs
-  - On a same-document back, the post layout also scrolled to the top after the router had restored the saved position
-  - The entry is now created at the destination URL during the tap, with the `{ index, scrollX, scrollY }` state the router already expects, and back navigation keeps the restored scroll position
-- iOS Chrome and Edge swipe-back skipping every in-site page and returning to the first page opened
-  - Astro's client router calls `history.pushState` only after fetching the next page, which is after the tap's user activation has ended
-  - WebKit then hides those history entries from the system back gesture
-  - The new entry is now created synchronously during the tap, and the router fills that same entry in once the page arrives
-  - View transition animations are unchanged
 - Slow theme switching animation on iPhone Safari (#122)
   - Removed universal CSS transitions that caused performance issues
   - Targeted only elements that actually change during theme switching
